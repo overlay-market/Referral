@@ -2,6 +2,7 @@ const ethers = require("ethers");
 const abi = require("./Abi/abi1.json");
 const config = require("./config.json");
 const abi2 = require("./Abi/abi2.json");
+const referral = require("./referral");
 
 const network = {
   name: "Arbitrum",
@@ -33,17 +34,21 @@ function getAddress(address, abii) {
   return contract;
 }
 
-async function read(marketContract, sender, positionId) {
-  const national = await stateContract.national(
-    marketContract.address,
-    sender,
-    positionId
-  );
+async function read(marketContract, sender, positionId, referral) {
+  if (referral.hasReferrer(sender)) {
+    const national = await stateContract.national(
+      marketContract.address,
+      sender,
+      positionId
+    );
 
-  const riskParamTradingFee = await marketContract.params(11);
-  const userTradingFee = national * riskParamTradingFee;
+    const riskParamTradingFee = await marketContract.params(11);
+    const userTradingFee = national * riskParamTradingFee;
 
-  updateReferral(userTradingFee, sender);
+    referral.updateReferral(userTradingFee, sender);
+  } else {
+    return "user has no referral";
+  }
 }
 
 module.exports = {

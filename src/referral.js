@@ -1,7 +1,7 @@
 const account = require("../account.schema");
 const referralBonusRate = require("../referralBonusRate.schema");
 
-class Referral {
+export class Referral {
   /**
    * @dev Max referral level depth
    */
@@ -35,29 +35,33 @@ class Referral {
     if ((referralBonus > decimals, "Referral bonus exceeds 100%"));
     if ((this.sum(levelRate) > decimals, "Total level rate exceeds 100%"));
 
-    this.bonusRate = referralBonusRate.create({
-      RBR: "RBR",
-      rate: [],
-      decimal: decimals,
-      levelRate: levelRate,
-      lowerBound: [],
-      referralBonus: referralBonus,
-      secondsUntilInactive: secondsUntilInactive,
-      onlyRewardActiveReferrers: onlyRewardActiveReferrers,
-    });
+    this.bonusRate = referralBonusRate.findOne({ RBR: "RBR" });
 
-    if (refereeBonusRateMap.length == 0) {
-      this.bonusRate.rate.push(1);
-      this.bonusRate.lowerBound.push(decimals);
-      return;
-    }
+    if (this.bonusRate == null) {
+      this.bonusRate = referralBonusRate.create({
+        RBR: "RBR",
+        rate: [],
+        decimal: decimals,
+        levelRate: levelRate,
+        lowerBound: [],
+        referralBonus: referralBonus,
+        secondsUntilInactive: secondsUntilInactive,
+        onlyRewardActiveReferrers: onlyRewardActiveReferrers,
+      });
 
-    for (let i = 0; i < refereeBonusRateMap.length; i += 2) {
-      if (refereeBonusRateMap[i + 1] > decimals) {
-        revert("One of referee bonus rate exceeds 100%");
+      if (refereeBonusRateMap.length == 0) {
+        this.bonusRate.rate.push(1);
+        this.bonusRate.lowerBound.push(decimals);
+        return;
       }
-      this.bonusRate.rate.push(refereeBonusRateMap[i]);
-      this.bonusRate.lowerBound.push(refereeBonusRateMap[i + 1]);
+
+      for (let i = 0; i < refereeBonusRateMap.length; i += 2) {
+        if (refereeBonusRateMap[i + 1] > decimals) {
+          revert("One of referee bonus rate exceeds 100%");
+        }
+        this.bonusRate.rate.push(refereeBonusRateMap[i]);
+        this.bonusRate.lowerBound.push(refereeBonusRateMap[i + 1]);
+      }
     }
   }
 
@@ -68,7 +72,7 @@ class Referral {
   /**
    * @dev Utils function for check whether an address has the referrer
    */
-  hasReferrer(addr) {
+  async hasReferrer(addr) {
     const userAccount = await account.findOne({ user: addr });
     return userAccount.referrer !== undefined;
   }
@@ -151,7 +155,6 @@ class Referral {
    */
   async updateReferral(value, sender) {
     userAccount = await account.findOne({ user: sender });
-    if (userAccount == null) return;
 
     for (let i = 0; i < this.bonusRate.levelRate.length; i++) {
       let parent = userAccount.referrer;
@@ -194,12 +197,12 @@ class Referral {
     await userAccount.save();
   }
 
-  setSecondsUntilInactive(secondsUntilInactive) {
+  async setSecondsUntilInactive(secondsUntilInactive) {
     this.bonusRate.secondsUntilInactive = secondsUntilInactive;
     await this.bonusRate.save();
   }
 
-  setOnlyRewardAActiveReferrers(onlyRewardActiveReferrers) {
+  async setOnlyRewardActiveReferrers(onlyRewardActiveReferrers) {
     this.bonusRate.onlyRewardActiveReferrers = onlyRewardActiveReferrers;
     await this.bonusRate.save();
   }
