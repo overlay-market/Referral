@@ -1,68 +1,66 @@
 const account = require("../account.schema");
 const referralBonusRate = require("../referralBonusRate.schema");
 
-export class Referral {
-  /**
-   * @dev Max referral level depth
-   */
-  // const = MAX_REFER_DEPTH = 3;
-
-  /**
-   * @dev Max referee amount to bonus rate depth
-   */
-  // const = MAX_REFEREE_BONUS_LEVEL = 3;
-
+module.exports = class Referral {
   constructor(
     decimals,
     referralBonus,
     secondsUntilInactive,
     onlyRewardActiveReferrers,
     levelRate,
-    refereeBonusRateMap
+    refereeBonusRateMap,
+    MAX_REFER_DEPTH,
+    MAX_REFEREE_BONUS_LEVEL
   ) {
     if ((levelRate.length <= 0, "Referral level should be at least one"));
-    if (
-      (levelRate.length > MAX_REFER_DEPTH, "Exceeded max referral level depth")
-    );
-    if (
-      (refereeBonusRateMap.length % 2 != 0,
-      "Referee Bonus Rate Map should be pass as [<lower amount>, <rate>, ....]")
-    );
-    if (
-      (refereeBonusRateMap.length / 2 > MAX_REFEREE_BONUS_LEVEL,
-      "Exceeded max referree bonus level depth")
-    );
-    if ((referralBonus > decimals, "Referral bonus exceeds 100%"));
-    if ((this.sum(levelRate) > decimals, "Total level rate exceeds 100%"));
+    if (levelRate.length > MAX_REFER_DEPTH)
+      return "Exceeded max referral level depth";
+    if (refereeBonusRateMap.length % 2 != 0)
+      return "Referee Bonus Rate Map should be pass as [<lower amount>, <rate>, ....]";
+    if (refereeBonusRateMap.length / 2 > MAX_REFEREE_BONUS_LEVEL)
+      return "Exceeded max referree bonus level depth";
+    if (referralBonus > decimals) return "Referral bonus exceeds 100%";
+    if (this.sum(levelRate) > decimals) return "Total level rate exceeds 100%";
 
-    this.bonusRate = referralBonusRate.findOne({ RBR: "RBR" });
+    referralBonusRate.findOne({ RBR: "RBR" }).then(async (value) => {
+      this.bonusRate = value;
 
-    if (this.bonusRate == null) {
-      this.bonusRate = referralBonusRate.create({
-        RBR: "RBR",
-        rate: [],
-        decimal: decimals,
-        levelRate: levelRate,
-        lowerBound: [],
-        referralBonus: referralBonus,
-        secondsUntilInactive: secondsUntilInactive,
-        onlyRewardActiveReferrers: onlyRewardActiveReferrers,
-      });
+      if (this.bonusRate == null) {
+        await referralBonusRate.create({
+          RBR: "RBR",
+          rate: [],
+          decimal: decimals,
+          levelRate: levelRate,
+          lowerBound: [],
+          referralBonus: referralBonus,
+          secondsUntilInactive: secondsUntilInactive,
+          onlyRewardActiveReferrers: onlyRewardActiveReferrers,
+        });
 
-      if (refereeBonusRateMap.length == 0) {
-        this.bonusRate.rate.push(1);
-        this.bonusRate.lowerBound.push(decimals);
-        return;
-      }
+        this.bonusRate = await referralBonusRate.findOne({ RBR: "RBR" });
 
-      for (let i = 0; i < refereeBonusRateMap.length; i += 2) {
-        if (refereeBonusRateMap[i + 1] > decimals) {
-          revert("One of referee bonus rate exceeds 100%");
+        if (refereeBonusRateMap.length == 0) {
+          this.bonusRate.rate = [decimals];
+          this.bonusRate.lowerBound = [1];
+          return;
         }
-        this.bonusRate.rate.push(refereeBonusRateMap[i]);
-        this.bonusRate.lowerBound.push(refereeBonusRateMap[i + 1]);
+
+        this.rate = [];
+        this.lowerBound = [];
+
+        for (let i = 0; i < refereeBonusRateMap.length; i += 2) {
+          if (refereeBonusRateMap[i + 1] > decimals) {
+            revert("One of referee bonus rate exceeds 100%");
+          }
+          this.lowerBound.push(refereeBonusRateMap[i]);
+          this.rate.push(refereeBonusRateMap[i + 1]);
+        }
+        this.bonusRate.lowerBound = this.lowerBound;
+        this.bonusRate.rate = this.rate;
+
+        this.bonusRate.save();
       }
-    }
+    });
   }
 
   sum(data) {
@@ -74,7 +72,14 @@ export class Referral {
    */
   async hasReferrer(addr) {
     const userAccount = await account.findOne({ user: addr });
-    return userAccount.referrer !== undefined;
+    if (userAccount != null) {
+      return userAccount.referrer != undefined;
+    }
+  }
+
+  async isReferral(addr) {
+    const userAccount = await account.findOne({ user: addr });
+    return userAccount != null;
   }
 
   /**
@@ -86,34 +91,35 @@ export class Referral {
 
   /**
    * @dev Given a user amount to calc in which rate period
-   * @param amount The number of referrees
+   * @param number The number of referrees
    */
-  getRefereeBonusRate(amount) {
-    let bonusRate = referralBonusRate.findOne({ RBR: "RBR" });
-    let rate = bonusRate.rates[0];
+  async getRefereeBonusRate(number) {
+    let bonusRate = await referralBonusRate.findOne({ RBR: "RBR" });
+    let rate = bonusRate.rate[0];
 
     for (let i = 1; i < bonusRate.lowerBound.length; i++) {
-      if (amount < bonusRate.lowerBound[i]) {
+      if (number < bonusRate.lowerBound[i]) {
         break;
       }
 
-      rate = bonusRate.rates[i];
+      rate = bonusRate.rate[i];
     }
-
     return rate;
   }
 
   async isCircularReference(referrer, referee) {
     let parent = referrer;
+    let parentAccount = await account.findOne({ user: parent });
 
     for (let i = 0; i < this.bonusRate.levelRate.length; i++) {
-      if (parent == undefined) {
+      if (parentAccount != null) {
+        if (parentAccount.referrer == referee) return true;
+        if (parentAccount.referrer == undefined) break;
+      } else {
         break;
       }
 
-      if (parent === referee) {
-        return true;
-      }
+      if (parent == referee) return true;
 
       parent = await account.findOne({ user: parent }).referrer;
     }
@@ -121,17 +127,35 @@ export class Referral {
     return false;
   }
 
+  async createReferralCode(string) {
+    // return the hash of string as part of user referral code
+  }
+
   /**
    * @dev Add an address as referrer
    * @param referrer The address would set as referrer of sender
    */
   async addReferrer(referrer, sender) {
-    const userAccount = await account.findOne({ user: sender });
+    let referrerAccount = await account.findOne({ user: referrer });
 
-    if (this.isCircularReference(referrer, sender)) {
-      return false;
-    } else if (userAccount.referrer != undefined) {
-      return false;
+    if (referrerAccount == null) {
+      referrerAccount = account.create({
+        user: referrer,
+        referrer: "",
+        reward: 0,
+        referredCount: 0,
+        lastActiveTimestamp: this.getTime(),
+      });
+    }
+
+    if (await this.isCircularReference(referrer, sender)) {
+      console.log("Referee cannot be one of referrer uplines");
+      return "Referee cannot be one of referrer uplines";
+    }
+
+    if (await this.hasReferrer(sender)) {
+      console.log("already have a referral");
+      return "already have a referral";
     }
 
     account.create({
@@ -142,10 +166,10 @@ export class Referral {
       lastActiveTimestamp: this.getTime(),
     });
 
-    const referrerAccount = await account.findOne({ user: referrer });
-    referrerAccount.referredCount = referrerAccount.referredCount++;
+    referrerAccount.referredCount = referrerAccount.referredCount + 1;
 
     await referrerAccount.save();
+    console.log("added");
   }
 
   /**
@@ -154,31 +178,31 @@ export class Referral {
    * @return the total referral bonus paid
    */
   async updateReferral(value, sender) {
-    userAccount = await account.findOne({ user: sender });
+    let userAccount = await account.findOne({ user: sender });
+    let bonus = this.bonusRate;
+    // console.log(bonus, "l");
 
-    for (let i = 0; i < this.bonusRate.levelRate.length; i++) {
+    for (let i = 0; i < bonus.levelRate.length; i++) {
       let parent = userAccount.referrer;
       let parentAccount = await account.findOne({ user: userAccount.referrer });
 
-      if (parent == undefined) {
+      if (parent == "") {
         break;
       }
 
       if (
-        (this.bonusRate.onlyRewardActiveReferrers &&
-          parentAccount.lastActiveTimestamp +
-            this.bonusRate.secondsUntilInactive >=
+        (bonus.onlyRewardActiveReferrers &&
+          parentAccount.lastActiveTimestamp + bonus.secondsUntilInactive >=
             this.getTime()) ||
-        !this.bonusRate.onlyRewardActiveReferrers
+        !bonus.onlyRewardActiveReferrers
       ) {
-        let c =
-          (value * this.bonusRate.referralBonus) / this.bonusRate.decimals;
+        let c = (value * bonus.referralBonus) / bonus.decimal;
 
-        c = (c * this.bonusRate.levelRate[i]) / this.bonusRate.decimals;
+        c = (c * bonus.levelRate[i]) / bonus.decimal;
 
         c =
-          (c * this.getRefereeBonusRate(parentAccount.referredCount)) /
-          this.bonusRate.decimals;
+          (c * (await this.getRefereeBonusRate(parentAccount.referredCount))) /
+          bonus.decimal;
 
         parentAccount.reward += c;
         await parentAccount.save();
@@ -188,11 +212,10 @@ export class Referral {
     }
 
     this.updateActiveTimestamp(sender);
-    return totalReferal;
   }
 
   async updateActiveTimestamp(sender) {
-    userAccount = await account.findOne({ user: sender });
+    let userAccount = await account.findOne({ user: sender });
     userAccount.lastActiveTimestamp = this.getTime();
     await userAccount.save();
   }
@@ -211,4 +234,4 @@ export class Referral {
   getTime() {
     return Math.floor(Date.now() / 1000);
   }
-}
+};

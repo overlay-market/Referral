@@ -7,7 +7,7 @@ const accountSchema = new mongoose.Schema({
   },
   referrer: {
     type: String,
-    required: true,
+    required: false,
   },
   reward: {
     type: Number,
