@@ -31,8 +31,6 @@ describe("Lock", () => {
   });
 
   afterAll(async () => {
-    jest.setTimeout(30000);
-    jest.useFakeTimers();
     await mongoDisconnect();
   });
 
