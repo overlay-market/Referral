@@ -33,6 +33,10 @@ const referralBonusRateSchema = new mongoose.Schema({
     type: Boolean,
     required: true,
   },
+  totalRewardsAvailableForClaim: {
+    type: Number,
+    required: true,
+  },
 });
 
 // connect referralBonusRateSchema with the "referralbonusrates" collection

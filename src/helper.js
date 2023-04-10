@@ -33,7 +33,21 @@ function getAddress(address, abii) {
   return contract;
 }
 
-async function read(referral) {
+async function read1(sender, id, referral, mark, SOL_USDmarketb) {
+  await referral.addReferrer(
+    "0x58DEbF4D4b04b3F5DB9e962DE81d589DD679f992",
+    "0x58DEbF4D4b04b3F5DB9e962DE81d589DD679f992"
+  );
+
+  if (await referral.hasReferrer(sender, userTradingFee)) {
+    await referral.updateReferral(userTradingFee, sender);
+  } else {
+    console.log("dd");
+    return "user has no referral";
+  }
+}
+
+async function read(sender, id, referral, mark, SOL_USDmarketb) {
   // TODO
 
   /*
@@ -41,26 +55,33 @@ async function read(referral) {
    they come to app via a user referral link the 
    referral.addReferral() is called
   */
-  await referral.addReferrer("sender", "ui");
 
-  // if (referral.hasReferrer(sender)) {
-  //   const national = await stateContract.national(
-  //     marketContract.address,
-  //     sender,
-  //     positionId
-  //   );
+  await referral.addReferrer(
+    "0x58DEbF4D4b04b3F5DB9e962DE81d589DD679f992",
+    "0x58DEbF4D4b04b3F5DB9e962DE81d589DD679f992"
+  );
 
-  //   const riskParamTradingFee = await marketContract.params(11);
-  //   const userTradingFee = national * riskParamTradingFee;
+  if (await referral.hasReferrer(sender)) {
+    const notional = await mark.notional(SOL_USDmarketb.address, sender, id);
+    console.log("dd");
+    const riskParamTradingFee = await SOL_USDmarketb.params(11);
+    const userTradingFee = notional * riskParamTradingFee;
+    console.log(userTradingFee / 1e18);
+    await referral.updateReferral(userTradingFee / 1e18, sender);
+  } else {
+    console.log("dd");
+    return "user has no referral";
+  }
 
-  //   referral.updateReferral(userTradingFee, sender);
-  // } else {
-  //   return "user has no referral";
-  // }
+  // let f = await referral.getTotalRewardsAvailableForClaim();
+  // let u = await referral.getUserReferralReward("nnn");
+  // console.log(u, f);
+  // console.log("works");
 }
 
 module.exports = {
   read,
+  read1,
   SOL_USDmarket,
   APE_USDmarket,
   WBTC_USDmarket,
