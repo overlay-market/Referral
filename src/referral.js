@@ -80,7 +80,7 @@ module.exports = class Referral {
     }
   }
 
-  async isReferral(addr) {
+  async isUser(addr) {
     const userAccount = await account.findOne({ user: addr });
     return userAccount != null;
   }
@@ -140,6 +140,7 @@ module.exports = class Referral {
    */
   async addReferrer(referrer, sender) {
     let referrerAccount = await account.findOne({ user: referrer });
+
     let userAccount = await account.findOne({ user: sender });
 
     if (await this.isCircularReference(referrer, sender)) {
@@ -153,20 +154,22 @@ module.exports = class Referral {
     }
 
     if (referrerAccount == null) {
-      referrerAccount = account.create({
+      referrerAccount = await account.create({
         user: referrer,
         referrer: "",
         reward: 0,
+        uplines: [],
         referredCount: 0,
         lastActiveTimestamp: this.getTime(),
       });
     }
 
     if (userAccount == null) {
-      account.create({
+      await account.create({
         user: sender,
         referrer: referrer,
         reward: 0,
+        uplines: [],
         referredCount: 0,
         lastActiveTimestamp: this.getTime(),
       });
@@ -175,6 +178,7 @@ module.exports = class Referral {
       await userAccount.save();
     }
 
+    console.log(referrerAccount, "ll");
     referrerAccount.referredCount = referrerAccount.referredCount + 1;
     await referrerAccount.save();
     console.log("added");
@@ -187,7 +191,9 @@ module.exports = class Referral {
    */
   async updateReferral(value, sender) {
     let userAccount = await account.findOne({ user: sender });
+    let bgb = await account.findOne({ user: sender });
     let bonus = this.bonusRate;
+    let uplines = [];
 
     for (let i = 0; i < bonus.levelRate.length; i++) {
       let parent = userAccount.referrer;
@@ -197,12 +203,7 @@ module.exports = class Referral {
         break;
       }
 
-      // if (
-      //   (bonus.onlyRewardActiveReferrers &&
-      //     parentAccount.lastActiveTimestamp + bonus.secondsUntilInactive >=
-      //       this.getTime()) ||
-      //   !bonus.onlyRewardActiveReferrers
-      // ) {
+      uplines.push(parent);
 
       let c = (value * bonus.referralBonus) / bonus.decimal;
       console.log(c, value);
@@ -211,19 +212,32 @@ module.exports = class Referral {
       c =
         (c * (await this.getRefereeBonusRate(parentAccount.referredCount))) /
         bonus.decimal;
-      console.log(c);
+      console.log(c, "llll");
 
       parentAccount.reward += c;
       bonus.totalRewardsAvailableForClaim += c;
 
       await bonus.save();
       await parentAccount.save();
-      // }
 
       userAccount = parentAccount;
     }
 
-    this.updateActiveTimestamp(sender);
+    await this.updateUpline(uplines, bgb);
+    await this.updateActiveTimestamp(sender);
+  }
+
+  async updateUpline(uplines, userAccount) {
+    if (uplines.length > 3) return;
+    if (uplines.length > userAccount.uplines.length) {
+      userAccount.uplines = uplines;
+      await userAccount.save();
+    }
+  }
+
+  async getUplines(sender) {
+    let userAccount = await account.findOne({ user: sender });
+    return userAccount.uplines;
   }
 
   async updateActiveTimestamp(sender) {

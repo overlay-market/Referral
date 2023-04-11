@@ -16,7 +16,7 @@ async function mongoConnect() {
 }
 
 async function mongoDisconnect() {
-  console.log("mongoDB done");
+  console.log("mongoDB disconnected");
   await mongoose.disconnect();
 }
 

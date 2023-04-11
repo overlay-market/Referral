@@ -13,6 +13,7 @@ interface Im {
      function approve(address spender, uint256 amount) external returns (bool);
 
      function notional(address _address, address sender, uint id) external view returns (uint);
+     function transfer(address recipient, uint256 amount) external returns (bool);
 
      event Build(
         address indexed sender, // address that initiated build (owns position)
