@@ -13,6 +13,10 @@ const accountSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  uplines: {
+    type: Array,
+    required: true,
+  },
   referredCount: {
     type: Number,
     required: true,
