@@ -6,7 +6,12 @@ const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { assert, expect } = require("chai");
 const { mongoConnect, mongoDisconnect } = require("../src/services/mongo");
 
-const { getReward, read } = require("../src/helper");
+const {
+  getReward,
+  read,
+  getUplines,
+  getUserReferralCount,
+} = require("../src/helper");
 
 const { network } = require("hardhat");
 const abi = require("../src/Abi/abi1.json");
@@ -40,7 +45,7 @@ async function impersonate(address) {
   });
 }
 
-async function nn() {
+async function deployClass() {
   referral = new referralClass(
     (decimals = 1000),
     (referralBonus = 800),
@@ -52,7 +57,7 @@ async function nn() {
     (MAX_REFEREE_BONUS_LEVEL = 3)
   );
 
-  console.log("oo");
+  console.log("Class deployed");
   return referral;
 }
 
@@ -60,7 +65,11 @@ describe("Lock", async function () {
   let impersonatedAddress = "0x072D06505950FD8a55F8cbc2d3796aFff1D84C11",
     owner,
     ovl,
+    user,
+    user1,
     market,
+    referral,
+    referrals,
     SOL_USDmarket;
 
   beforeEach(async () => {
@@ -68,6 +77,12 @@ describe("Lock", async function () {
     await mongoConnect();
     await impersonate(impersonatedAddress);
     owner = await ethers.getSigner(impersonatedAddress);
+
+    [user, user1, user2, user3, user4, user5] = await ethers.getSigners();
+    referral = await deployClass();
+    referrals = [user, user1, user2];
+
+    let gfg = [user, user1];
 
     SOL_USDmarket = await getAddress(config.MARKETS["SOL/USD"]);
 
@@ -79,6 +94,13 @@ describe("Lock", async function () {
       .connect(owner)
       .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
 
+    for (let i = 0; i < gfg.length; i++) {
+      await ovl.connect(owner).transfer(gfg[i].address, "3000000000000000000");
+      await ovl
+        .connect(gfg[i])
+        .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
+    }
+
     market = await getAddress(
       config.CORE_CONTRACTS["OVERLAY_V1_STATE_CONTRACT_ADDRESS"]
     );
@@ -88,9 +110,11 @@ describe("Lock", async function () {
     await mongoDisconnect();
   });
 
-  describe("Deployment", function () {
-    it("Should failed to deploy when levels is empty", async function () {
-      let tx = await SOL_USDmarket.connect(owner).build(
+  async function build() {
+    let users = [owner, user, user1];
+
+    for (let i = 0; i < users.length; i++) {
+      let tx = await SOL_USDmarket.connect(users[i]).build(
         "2000000000000000000",
         "1000000000000000000",
         true,
@@ -98,9 +122,6 @@ describe("Lock", async function () {
       );
 
       let t = await tx.wait();
-      console.log(t.events[0].args[1]);
-
-      let referral = await nn();
 
       await read(
         t.events[0].args[0],
@@ -108,18 +129,115 @@ describe("Lock", async function () {
         referral,
         market,
         SOL_USDmarket,
-        "0x58debf4d4b04b3f5db9e962de81d589dd679f992"
+        referrals[i].address,
+        true
+      );
+    }
+  }
+
+  describe("Referral", function () {
+    it.skip("Should add referral", async function () {
+      await ovl.connect(user1).transfer(user4.address, "2000000000000000000");
+      await ovl
+        .connect(user4)
+        .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
+
+      const hasReferralBeforeTx = await referral.hasReferrer(user4.address);
+
+      let tx = await SOL_USDmarket.connect(user4).build(
+        "1000000000000000000",
+        "1000000000000000000",
+        true,
+        "20300000000000000000"
       );
 
-      let b = await getReward(
-        "0x58debf4d4b04b3f5db9e962de81d589dd679f992",
-        referral
-      );
-      console.log(b, "l");
+      let t = await tx.wait();
 
-      // assert.equal(Number(bb), Number(2497847273020215));
+      await read(
+        t.events[0].args[0],
+        t.events[0].args[1],
+        referral,
+        market,
+        SOL_USDmarket,
+        user1.address,
+        true
+      );
+
+      const hasReferralAfterTx = await referral.hasReferrer(user4.address);
+
+      expect(hasReferralBeforeTx).to.be.equal(false);
+      expect(hasReferralAfterTx).to.be.equal(true);
     });
 
-    it("Should set the right owner", async function () {});
+    it.skip("Should update referral count", async function () {
+      await ovl.connect(user1).transfer(user5.address, "2000000000000000000");
+      await ovl
+        .connect(user5)
+        .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
+
+      const userReferralBeforeTx = await getUserReferralCount(
+        user1.address,
+        referral
+      );
+
+      let tx = await SOL_USDmarket.connect(user5).build(
+        "1000000000000000000",
+        "1000000000000000000",
+        true,
+        "20300000000000000000"
+      );
+
+      let t = await tx.wait();
+
+      await read(
+        t.events[0].args[0],
+        t.events[0].args[1],
+        referral,
+        market,
+        SOL_USDmarket,
+        user1.address,
+        true
+      );
+
+      const userReferralAfterTx = await getUserReferralCount(
+        user1.address,
+        referral
+      );
+
+      expect(userReferralAfterTx).to.be.above(userReferralBeforeTx);
+    });
+
+    it("Should pay all uplines", async function () {
+      let uplines = await getUplines(owner.address, referral);
+      let firstUplineBeforeBuild = await getReward(uplines[0], referral);
+      let secondUplineBeforeBuild = await getReward(uplines[1], referral);
+      let thirdUplineBeforeBuild = await getReward(uplines[2], referral);
+
+      let tx = await SOL_USDmarket.connect(owner).build(
+        "1000000000000000000",
+        "1000000000000000000",
+        true,
+        "20300000000000000000"
+      );
+
+      let t = await tx.wait();
+
+      await read(
+        t.events[0].args[0],
+        t.events[0].args[1],
+        referral,
+        market,
+        SOL_USDmarket,
+        referrals[2].address,
+        true
+      );
+      let firstUplineAfterBuild = await getReward(uplines[0], referral);
+      let secondUplineAfterBuild = await getReward(uplines[1], referral);
+      let thirdUplineAfterBuild = await getReward(uplines[2], referral);
+
+      expect(firstUplineAfterBuild).to.be.above(firstUplineBeforeBuild);
+      expect(secondUplineAfterBuild).to.be.above(secondUplineBeforeBuild);
+      expect(thirdUplineAfterBuild).to.be.above(thirdUplineBeforeBuild);
+    });
   });
 });
