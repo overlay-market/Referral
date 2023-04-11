@@ -1,5 +1,5 @@
-const account = require("../account.schema");
-const referralBonusRate = require("../referralBonusRate.schema");
+const account = require("../schemas/account.schema");
+const referralBonusRate = require("../schemas/referralBonusRate.schema");
 
 module.exports = class Referral {
   constructor(
@@ -115,14 +115,14 @@ module.exports = class Referral {
     let parentAccount = await account.findOne({ user: parent });
 
     for (let i = 0; i < this.bonusRate.levelRate.length; i++) {
+      if (parent == referee) return true;
+
       if (parentAccount != null) {
         if (parentAccount.referrer == referee) return true;
         if (parentAccount.referrer == "") break;
       } else {
         break;
       }
-
-      if (parent == referee) return true;
 
       parent = await account.findOne({ user: parent }).referrer;
     }
@@ -144,13 +144,11 @@ module.exports = class Referral {
     let userAccount = await account.findOne({ user: sender });
 
     if (await this.isCircularReference(referrer, sender)) {
-      console.log("Referee cannot be one of referrer uplines");
-      return "Referee cannot be one of referrer uplines";
+      return { tx: false, reason: "Referee cannot be one of referrer uplines" };
     }
 
     if (await this.hasReferrer(sender)) {
-      console.log("already have a referral");
-      return "already have a referral";
+      return { tx: false, reason: "already has a referral" };
     }
 
     if (referrerAccount == null) {
@@ -178,10 +176,10 @@ module.exports = class Referral {
       await userAccount.save();
     }
 
-    console.log(referrerAccount, "ll");
     referrerAccount.referredCount = referrerAccount.referredCount + 1;
     await referrerAccount.save();
-    console.log("added");
+
+    return { tx: true, reason: "" };
   }
 
   /**
@@ -191,7 +189,8 @@ module.exports = class Referral {
    */
   async updateReferral(value, sender) {
     let userAccount = await account.findOne({ user: sender });
-    let bgb = await account.findOne({ user: sender });
+    let user = await account.findOne({ user: sender });
+
     let bonus = this.bonusRate;
     let uplines = [];
 
@@ -206,13 +205,10 @@ module.exports = class Referral {
       uplines.push(parent);
 
       let c = (value * bonus.referralBonus) / bonus.decimal;
-      console.log(c, value);
       c = (c * bonus.levelRate[i]) / bonus.decimal;
-      console.log(c);
       c =
         (c * (await this.getRefereeBonusRate(parentAccount.referredCount))) /
         bonus.decimal;
-      console.log(c, "llll");
 
       parentAccount.reward += c;
       bonus.totalRewardsAvailableForClaim += c;
@@ -223,7 +219,7 @@ module.exports = class Referral {
       userAccount = parentAccount;
     }
 
-    await this.updateUpline(uplines, bgb);
+    await this.updateUpline(uplines, user);
     await this.updateActiveTimestamp(sender);
   }
 
@@ -246,9 +242,14 @@ module.exports = class Referral {
     await userAccount.save();
   }
 
-  async getUserReferralReward(user) {
-    let userAccount = await account.findOne({ user: user });
+  async getUserReferralReward(users) {
+    let userAccount = await account.findOne({ user: users });
     return userAccount.reward;
+  }
+
+  async getUserReferralCount(users) {
+    let userAccount = await account.findOne({ user: users });
+    return userAccount.referredCount;
   }
 
   async getTotalRewardsAvailableForClaim() {
@@ -265,7 +266,6 @@ module.exports = class Referral {
     await this.bonusRate.save();
   }
 
-  // Internal helper function
   getTime() {
     return Math.floor(Date.now() / 1000);
   }
