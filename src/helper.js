@@ -80,9 +80,8 @@ async function read(
 
   if (referralLink) {
     const result = await referral.addReferrer(referrer, sender);
-    if (result["tx"]) {
-      await execute(sender, id, marketContract);
-    } else return result["reason"];
+    if (result["tx"]) await execute(sender, id, marketContract);
+    else return result["reason"];
   }
 
   if (await referral.hasReferrer(sender)) {
