@@ -14,4 +14,13 @@ interface HelpfulInterface {
 
      function notional(address _address, address sender, uint id) external view returns (uint);
      function transfer(address recipient, uint256 amount) external returns (bool);
+
+     event Build(
+        address indexed sender, // address that initiated build (owns position)
+        uint256 positionId, // id of built position
+        uint256 oi, // oi of position at build
+        uint256 debt, // debt of position at build
+        bool isLong, // whether is long or short
+        uint256 price // entry price
+    );
 }

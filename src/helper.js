@@ -84,11 +84,9 @@ async function read(
     else return result["reason"];
   }
 
-  if (await referral.hasReferrer(sender)) {
+  if (await referral.hasReferrer(sender))
     await execute(sender, id, marketContract);
-  } else {
-    return "user has no referral";
-  }
+  else return "user has no referral";
 
   async function execute(sender, id, marketContract) {
     const notional = await stateContract.notional(
