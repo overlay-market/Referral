@@ -20,19 +20,12 @@ const {
   MATIC_USDmarket,
 } = require("./helper");
 
-async function nn() {
-  referral = new referralClass(
-    (decimals = 1000),
-    (referralBonus = 800),
-    (secondsUntilInactive = 365),
-    (onlyRewardActiveReferrers = true),
-    (levelRate = [600, 300, 100]),
-    (refereeBonusRateMap = [1, 500, 5, 750, 15, 1000]),
-    (MAX_REFER_DEPTH = 3),
-    (MAX_REFEREE_BONUS_LEVEL = 3)
-  );
-  await read(referral);
-}
+const referral = new referralClass(
+  (decimals = 1000),
+  (referralBonus = 800),
+  (levelRate = [400, 300, 200, 100]),
+  (maxReferDepth = 4)
+);
 
 // SOL_USDmarket.on("Build", async (sender, positionId) => {
 //   await read(SOL_USDmarket, sender, positionId, referral);

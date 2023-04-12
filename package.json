@@ -4,21 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "hardhat test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "jest": {
-    "testEnvironment": "node"
-  },
   "dependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "mongoose": "^7.0.3"
-  },
-  "devDependencies": {
-    "jest": "^29.5.0"
   }
 }

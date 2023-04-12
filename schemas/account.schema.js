@@ -21,10 +21,6 @@ const accountSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  lastActiveTimestamp: {
-    type: Number,
-    required: true,
-  },
 });
 
 // connect accountSchema with the "accounts" collection

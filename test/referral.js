@@ -14,44 +14,39 @@ async function deployClass() {
   referral = new referralClass(
     (decimals = 1000),
     (referralBonus = 800),
-    (secondsUntilInactive = 365),
-    (onlyRewardActiveReferrers = true),
-    (levelRate = [600, 300, 100]),
-    (refereeBonusRateMap = [1, 500, 5, 750, 15, 1000]),
-    (MAX_REFER_DEPTH = 3),
-    (MAX_REFEREE_BONUS_LEVEL = 3)
+    (levelRate = [400, 300, 200, 100]),
+    (maxReferDepth = 4)
   );
 
   return referral;
 }
 
 describe("Referral Program", async function () {
-  let impersonatedAddress = "0x072D06505950FD8a55F8cbc2d3796aFff1D84C11",
-    owner,
+  let owner,
     ovl,
     user,
     user1,
     market,
     referral,
     referrals,
-    SOL_USDmarket;
+    SOL_USDmarket,
+    impersonatedAddress = "0x072D06505950FD8a55F8cbc2d3796aFff1D84C11";
 
   beforeEach(async () => {
     await mongoConnect();
     referral = await deployClass();
 
     await fork_network(78527593);
-
     await impersonate(impersonatedAddress);
-    owner = await ethers.getSigner(impersonatedAddress);
 
+    owner = await ethers.getSigner(impersonatedAddress);
     [user, user1, user2, user3, user4, user5, user6] =
       await ethers.getSigners();
+
     referrals = [user, user1, user2];
-
     let len = [user, user1];
-    SOL_USDmarket = await getLiveAddress(config.MARKETS["SOL/USD"]);
 
+    SOL_USDmarket = await getLiveAddress(config.MARKETS["SOL/USD"]);
     ovl = await getLiveAddress(
       config.CORE_CONTRACTS["OVERLAY_V1_TOKEN_CONTRACT_ADDRESS"]
     );
@@ -99,6 +94,7 @@ describe("Referral Program", async function () {
 
       return result;
     }
+
     it("Should fail and return user has no upline", async function () {
       await ovl.connect(user1).transfer(user4.address, "2000000000000000000");
       await ovl
@@ -142,11 +138,12 @@ describe("Referral Program", async function () {
       const userReferralBeforeTx = await referral.getUserReferralCount(
         user1.address
       );
-      await build(user5, true, user1.address);
 
+      await build(user5, true, user1.address);
       const userReferralAfterTx = await referral.getUserReferralCount(
         user1.address
       );
+
       expect(userReferralAfterTx).to.be.above(userReferralBeforeTx);
     });
 

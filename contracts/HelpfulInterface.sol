@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-interface Im {
+interface HelpfulInterface {
     function build(uint256 collateral,
         uint256 leverage,
         bool isLong,

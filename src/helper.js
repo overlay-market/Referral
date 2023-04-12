@@ -1,8 +1,8 @@
 const ether = require("ethers");
 const { network } = require("hardhat");
-const abi = require("./Abi/abi1.json");
+const abi = require("./abi/abi1.json");
 const config = require("./config.json");
-const abi2 = require("./Abi/abi2.json");
+const abi2 = require("./abi/abi2.json");
 
 const networks = {
   name: "Arbitrum",
@@ -45,7 +45,7 @@ async function fork_network(blockNumber) {
 }
 
 async function getLiveAddress(address) {
-  const contract = await ethers.getContractAt("Im", address);
+  const contract = await ethers.getContractAt("HelpfulInterface", address);
   return contract;
 }
 
@@ -65,8 +65,8 @@ async function read(
   sender,
   id,
   referral,
-  mark,
-  SOL_USDmarketb,
+  stateContract,
+  marketContract,
   referrer,
   referralLink
 ) {
@@ -81,19 +81,23 @@ async function read(
   if (referralLink) {
     const result = await referral.addReferrer(referrer, sender);
     if (result["tx"]) {
-      await u(sender, id, SOL_USDmarketb);
+      await execute(sender, id, marketContract);
     } else return result["reason"];
   }
 
   if (await referral.hasReferrer(sender)) {
-    await u(sender, id, SOL_USDmarketb);
+    await execute(sender, id, marketContract);
   } else {
     return "user has no referral";
   }
 
-  async function u(sender, id, SOL_USDmarketb) {
-    const notional = await mark.notional(SOL_USDmarketb.address, sender, id);
-    const riskParamTradingFee = await SOL_USDmarketb.params(11);
+  async function execute(sender, id, marketContract) {
+    const notional = await stateContract.notional(
+      marketContract.address,
+      sender,
+      id
+    );
+    const riskParamTradingFee = await marketContract.params(11);
 
     const userTradingFee = notional * riskParamTradingFee;
     await referral.updateReferral(userTradingFee / 1e18, sender);
