@@ -77,18 +77,12 @@ async function read(
    they come to app via a user referral link the 
    referral.addReferral() is called
   */
-
+  let result;
   if (referralLink) {
-    const result = await referral.addReferrer(referrer, sender);
-    if (result["tx"]) await execute(sender, id, marketContract);
-    else return result["reason"];
+    result = await referral.addReferrer(referrer, sender);
   }
 
-  if (await referral.hasReferrer(sender))
-    await execute(sender, id, marketContract);
-  else return "user has no referral";
-
-  async function execute(sender, id, marketContract) {
+  if (await referral.hasReferrer(sender)) {
     const notional = await stateContract.notional(
       marketContract.address,
       sender,
@@ -98,7 +92,8 @@ async function read(
 
     const userTradingFee = notional * riskParamTradingFee;
     await referral.updateReferral(userTradingFee / 1e18, sender);
-  }
+  } else return "user has no referral";
+  if (referralLink) return result["reason"];
 }
 
 module.exports = {

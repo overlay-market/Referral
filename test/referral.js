@@ -106,10 +106,12 @@ describe("Referral Program", async function () {
     });
 
     it("Should fail and  return referee cannot be one of referrer uplines", async function () {
-      await ovl.connect(user1).transfer(user6.address, "2000000000000000000");
+      await ovl.connect(owner).transfer(user6.address, "4000000000000000000");
       await ovl
         .connect(user6)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
+
+      await build(user6, true, user.address);
 
       const result = await build(user6, true, user6.address);
       expect(result).to.be.equal("Referee cannot be one of referrer uplines");
