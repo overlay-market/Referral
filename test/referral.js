@@ -85,6 +85,7 @@ describe("Referral Program", async function () {
 
       let t = await tx.wait();
       id = t.events[0].args[1];
+
       let result = await read(
         t.events[0].args[0],
         t.events[0].args[1],
@@ -104,7 +105,7 @@ describe("Referral Program", async function () {
         .connect(user4)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
 
-      const result = await build(user4, false, user1.address);
+      const result = await build(user4, false, "");
       expect(result).to.be.equal("user has no referral");
     });
 
@@ -164,7 +165,7 @@ describe("Referral Program", async function () {
         uplines[0]
       );
 
-      await build(owner, false, referrals[2].address);
+      await build(owner, false, "");
       let firstUplineAfterBuild = await referral.getUserReferralReward(
         uplines[0]
       );
