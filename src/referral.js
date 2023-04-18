@@ -2,7 +2,14 @@ const account = require("../schemas/account.schema");
 const referralBonusRate = require("../schemas/referralBonusRate.schema");
 
 module.exports = class Referral {
-  constructor(decimals, referralBonus, levelRate, maxReferDepth) {
+  constructor(
+    decimals,
+    referralBonus,
+    levelRate,
+    maxReferDepth,
+    discountDays,
+    discountBonus
+  ) {
     if ((levelRate.length <= 0, "Referral level should be at least one"));
     if (levelRate.length > maxReferDepth)
       return "Exceeded max referral level depth";
@@ -20,7 +27,9 @@ module.exports = class Referral {
           RBR: "RBR",
           decimal: decimals,
           levelRate: levelRate,
+          discountDays: discountDays,
           referralBonus: referralBonus,
+          discountBonus: discountBonus,
           totalRewardsAvailableForClaim: 0,
         });
       }
@@ -110,7 +119,9 @@ module.exports = class Referral {
         user: referrer,
         referrer: "",
         reward: 0,
+        date: this.getDateInSeconds() + this.bonusRate.discountDays,
         uplines: [],
+        discount: 0,
         referredCount: 0,
       });
     }
@@ -120,7 +131,9 @@ module.exports = class Referral {
         user: sender,
         referrer: referrer,
         reward: 0,
+        date: this.getDateInSeconds(),
         uplines: [],
+        discount: 0,
         referredCount: 0,
       });
     } else if (userAccount.referrer == "") {
@@ -167,6 +180,12 @@ module.exports = class Referral {
       userAccount = parentAccount;
     }
 
+    if (user.date + bonus.discountDays > this.getDateInSeconds()) {
+      let discount = (value * bonus.discountBonus) / bonus.decimal;
+      user.discount = user.discount + discount;
+      await user.save();
+    }
+
     await this.updateUpline(uplines, user);
   }
 
@@ -206,9 +225,21 @@ module.exports = class Referral {
   }
 
   /**
+   * @dev gets users referral count
+   */
+  async getUserDiscount(users) {
+    let userAccount = await account.findOne({ user: users });
+    return userAccount.discount;
+  }
+
+  /**
    * @dev gets total rewards available for claiming
    */
   async getTotalRewardsAvailableForClaim() {
     return this.bonusRate.totalRewardsAvailableForClaim;
+  }
+
+  getDateInSeconds() {
+    return Math.floor(Date.now() / 1000);
   }
 };

@@ -24,32 +24,34 @@ const referral = new referralClass(
   (decimals = 1000),
   (referralBonus = 800),
   (levelRate = [400, 300, 200, 100]),
-  (maxReferDepth = 4)
+  (maxReferDepth = 4),
+  (discountDays = 2592000),
+  (discountBonus = 200)
 );
 
-// SOL_USDmarket.on("Build", async (sender, positionId) => {
-//   await read(SOL_USDmarket, sender, positionId, referral);
-// });
+SOL_USDmarket.on("Build", async (sender, positionId) => {
+  await read(SOL_USDmarket, sender, positionId, referral);
+});
 
-// APE_USDmarket.on("Build", async (sender, positionId) => {
-//   await read(APE_USDmarket, sender, positionId, referral);
-// });
+APE_USDmarket.on("Build", async (sender, positionId) => {
+  await read(APE_USDmarket, sender, positionId, referral);
+});
 
-// AVAX_USDmarket.on("Build", async (sender, positionId) => {
-//   await read(AVAX_USDmarket, sender, positionId, referral);
-// });
+AVAX_USDmarket.on("Build", async (sender, positionId) => {
+  await read(AVAX_USDmarket, sender, positionId, referral);
+});
 
-// MATIC_USDmarket.on("Build", async (sender, positionId) => {
-//   await read(MATIC_USDmarket, sender, positionId, referral);
-// });
+MATIC_USDmarket.on("Build", async (sender, positionId) => {
+  await read(MATIC_USDmarket, sender, positionId, referral);
+});
 
-// WBTC_USDmarket.on("Build", async (sender, positionId) => {
-//   await read(WBTC_USDmarket, sender, positionId, referral);
-// });
+WBTC_USDmarket.on("Build", async (sender, positionId) => {
+  await read(WBTC_USDmarket, sender, positionId, referral);
+});
 
-// LINK_USDmarket.on("Build", async (sender, positionId) => {
-//   await read(LINK_USDmarket, sender, positionId, referral);
-// });
+LINK_USDmarket.on("Build", async (sender, positionId) => {
+  await read(LINK_USDmarket, sender, positionId, referral);
+});
 
 server.listen(8080, async function () {
   await mongoConnect();

@@ -17,6 +17,14 @@ const referralBonusRateSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  discountDays: {
+    type: Number,
+    required: true,
+  },
+  discountBonus: {
+    type: Number,
+    required: true,
+  },
   totalRewardsAvailableForClaim: {
     type: Number,
     required: true,

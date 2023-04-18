@@ -92,8 +92,8 @@ async function read(
 
     const userTradingFee = notional * riskParamTradingFee;
     await referral.updateReferral(userTradingFee / 1e18, sender);
+    if (referralLink) return result["reason"];
   } else return "user has no referral";
-  if (referralLink) return result["reason"];
 }
 
 module.exports = {

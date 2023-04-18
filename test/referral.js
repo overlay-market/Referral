@@ -15,7 +15,9 @@ async function deployClass() {
     (decimals = 1000),
     (referralBonus = 800),
     (levelRate = [400, 300, 200, 100]),
-    (maxReferDepth = 4)
+    (maxReferDepth = 4),
+    (discountDays = 2592000),
+    (discountBonus = 200)
   );
 
   return referral;
@@ -23,6 +25,7 @@ async function deployClass() {
 
 describe("Referral Program", async function () {
   let owner,
+    id,
     ovl,
     user,
     user1,
@@ -81,7 +84,7 @@ describe("Referral Program", async function () {
       );
 
       let t = await tx.wait();
-
+      id = t.events[0].args[1];
       let result = await read(
         t.events[0].args[0],
         t.events[0].args[1],
@@ -172,6 +175,24 @@ describe("Referral Program", async function () {
     it("Should fail and return already has a referral", async function () {
       const result = await build(owner, true, user6.address);
       expect(result).to.be.equal("already has a referral");
+    });
+
+    it("Should update discount correctly", async function () {
+      let discountBeforeBuild = await referral.getUserDiscount(owner.address);
+      await build(owner, false, "");
+
+      const notional = await market.notional(
+        SOL_USDmarket.address,
+        owner.address,
+        id
+      );
+      const riskParamTradingFee = await SOL_USDmarket.params(11);
+
+      const userTradingFee = (notional * riskParamTradingFee) / 1e18;
+      const fee = userTradingFee * 0.2;
+
+      let discountAfterBuild = await referral.getUserDiscount(owner.address);
+      expect(discountBeforeBuild + fee).to.be.equal(discountAfterBuild);
     });
   });
 });
