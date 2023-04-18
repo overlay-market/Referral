@@ -180,6 +180,7 @@ module.exports = class Referral {
       userAccount = parentAccount;
     }
 
+    // gets discount as a new user for the duration of discountDays
     if (user.date + bonus.discountDays > this.getDateInSeconds()) {
       let discount = (value * bonus.discountBonus) / bonus.decimal;
       user.discount = user.discount + discount;
