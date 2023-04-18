@@ -194,5 +194,13 @@ describe("Referral Program", async function () {
       let discountAfterBuild = await referral.getUserDiscount(owner.address);
       expect(discountBeforeBuild + fee).to.be.equal(discountAfterBuild);
     });
+
+    it("Discount should remain same if users date is set to zero", async function () {
+      let discountBeforeBuild = await referral.getUserDiscount(user.address);
+      await build(user, false, "");
+
+      let discountAfterBuild = await referral.getUserDiscount(user.address);
+      expect(discountBeforeBuild).to.be.equal(discountAfterBuild);
+    });
   });
 });

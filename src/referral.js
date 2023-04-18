@@ -119,7 +119,7 @@ module.exports = class Referral {
         user: referrer,
         referrer: "",
         reward: 0,
-        date: this.getDateInSeconds() + this.bonusRate.discountDays,
+        date: 0,
         uplines: [],
         discount: 0,
         referredCount: 0,
