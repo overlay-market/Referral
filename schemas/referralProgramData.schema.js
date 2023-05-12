@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
-const referralBonusRateSchema = new mongoose.Schema({
-  RBR: {
+const referralProgramDataSchema = new mongoose.Schema({
+  RPD: {
     type: String,
     required: true,
   },
@@ -29,7 +29,14 @@ const referralBonusRateSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  users: {
+    type: Object,
+    required: true,
+  },
 });
 
-// connect referralBonusRateSchema with the "referralbonusrates" collection
-module.exports = mongoose.model("referralBonusRate", referralBonusRateSchema);
+// connect referralProgramData with the "referralprogramdatas" collection
+module.exports = mongoose.model(
+  "referralProgramData",
+  referralProgramDataSchema
+);

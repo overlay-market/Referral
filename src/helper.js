@@ -61,27 +61,20 @@ function getAddress(address, abii) {
   return contract;
 }
 
-async function read(
-  sender,
-  id,
-  referral,
-  stateContract,
-  marketContract,
-  referrer,
-  referralLink
-) {
-  // TODO
+/**
+ * @dev addReferrer() will be visible to only users that joins via a users
+ * referral link
+ */
+async function addReferral(referral, referrer, sender) {
+  const result = await referral.addReferrer(referrer, sender);
+  return result["reason"];
+}
 
-  /*
-   from frontend if user indicate they have a referral address or 
-   they come to app via a user referral link the 
-   referral.addReferral() is called
-  */
-  let result;
-  if (referralLink) {
-    result = await referral.addReferrer(referrer, sender);
-  }
-
+/**
+ * @dev Reads event from Build(),
+ * Calculates the tradingFee and calls referral class
+ */
+async function read(sender, id, referral, stateContract, marketContract) {
   if (await referral.hasReferrer(sender)) {
     const notional = await stateContract.notional(
       marketContract.address,
@@ -92,12 +85,12 @@ async function read(
 
     const userTradingFee = notional * riskParamTradingFee;
     await referral.updateReferral(userTradingFee / 1e18, sender);
-    if (referralLink) return result["reason"];
   } else return "user has no referral";
 }
 
 module.exports = {
   read,
+  addReferral,
   impersonate,
   fork_network,
   SOL_USDmarket,

@@ -29,6 +29,7 @@ const referral = new referralClass(
   (discountBonus = 200)
 );
 
+//Listen to OVL live markets events
 SOL_USDmarket.on("Build", async (sender, positionId) => {
   await read(SOL_USDmarket, sender, positionId, referral);
 });

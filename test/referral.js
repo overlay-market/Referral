@@ -1,5 +1,6 @@
 const {
   read,
+  addReferral,
   impersonate,
   fork_network,
   getLiveAddress,
@@ -75,7 +76,7 @@ describe("Referral Program", async function () {
   });
 
   describe("Referral", function () {
-    async function build(user, flag, referrer) {
+    async function build(user) {
       let tx = await SOL_USDmarket.connect(user).build(
         "1000000000000000000",
         "1000000000000000000",
@@ -91,9 +92,7 @@ describe("Referral Program", async function () {
         t.events[0].args[1],
         referral,
         market,
-        SOL_USDmarket,
-        referrer,
-        flag
+        SOL_USDmarket
       );
 
       return result;
@@ -105,19 +104,20 @@ describe("Referral Program", async function () {
         .connect(user4)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
 
-      const result = await build(user4, false, "");
+      const result = await build(user4);
       expect(result).to.be.equal("user has no referral");
     });
 
-    it("Should fail and  return referee cannot be one of referrer uplines", async function () {
+    it("Should fail and return referee cannot be one of referrer uplines", async function () {
       await ovl.connect(owner).transfer(user6.address, "4000000000000000000");
       await ovl
         .connect(user6)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
 
-      await build(user6, true, user.address);
+      await referral.createReferralCode("jhjyy", user.address);
+      await addReferral(referral, user.address, user6.address);
 
-      const result = await build(user6, true, user6.address);
+      const result = await addReferral(referral, user6.address, user6.address);
       expect(result).to.be.equal("Referee cannot be one of referrer uplines");
     });
 
@@ -127,8 +127,10 @@ describe("Referral Program", async function () {
         .connect(user4)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
 
+      await referral.createReferralCode("jhjyy", user1.address);
+
       const hasReferralBeforeTx = await referral.hasReferrer(user4.address);
-      await build(user4, true, user1.address);
+      await addReferral(referral, user1.address, user4.address);
       const hasReferralAfterTx = await referral.hasReferrer(user4.address);
 
       expect(hasReferralBeforeTx).to.be.equal(false);
@@ -145,7 +147,10 @@ describe("Referral Program", async function () {
         user1.address
       );
 
-      await build(user5, true, user1.address);
+      await addReferral(referral, user1.address, user5.address);
+
+      await build(user5);
+
       const userReferralAfterTx = await referral.getUserReferralCount(
         user1.address
       );
@@ -157,7 +162,8 @@ describe("Referral Program", async function () {
       let users = [owner, user, user1];
 
       for (let i = 0; i < users.length; i++) {
-        await build(users[i], true, referrals[i].address);
+        await addReferral(referral, referrals[i].address, users[i].address);
+        await build(users[i]);
       }
 
       let uplines = await referral.getUplines(owner.address);
@@ -165,7 +171,7 @@ describe("Referral Program", async function () {
         uplines[0]
       );
 
-      await build(owner, false, "");
+      await build(owner);
       let firstUplineAfterBuild = await referral.getUserReferralReward(
         uplines[0]
       );
@@ -174,13 +180,13 @@ describe("Referral Program", async function () {
     });
 
     it("Should fail and return already has a referral", async function () {
-      const result = await build(owner, true, user6.address);
+      const result = await addReferral(referral, owner.address, user6.address);
       expect(result).to.be.equal("already has a referral");
     });
 
     it("Should update discount correctly", async function () {
       let discountBeforeBuild = await referral.getUserDiscount(owner.address);
-      await build(owner, false, "");
+      await build(owner);
 
       const notional = await market.notional(
         SOL_USDmarket.address,
@@ -198,7 +204,7 @@ describe("Referral Program", async function () {
 
     it("Discount should remain same if users date is set to zero", async function () {
       let discountBeforeBuild = await referral.getUserDiscount(user.address);
-      await build(user, false, "");
+      await build(user);
 
       let discountAfterBuild = await referral.getUserDiscount(user.address);
       expect(discountBeforeBuild).to.be.equal(discountAfterBuild);

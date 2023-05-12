@@ -1,5 +1,6 @@
+const link = require("../schemas/userLinks.schema");
 const account = require("../schemas/account.schema");
-const referralBonusRate = require("../schemas/referralBonusRate.schema");
+const referralProgramData = require("../schemas/referralProgramData.schema");
 
 module.exports = class Referral {
   constructor(
@@ -18,19 +19,20 @@ module.exports = class Referral {
     if (this.sum(levelRate) > decimals) return "Total level rate exceeds 100%";
 
     // check if RBR collection already has 'RBR' data
-    referralBonusRate.findOne({ RBR: "RBR" }).then(async (value) => {
+    referralProgramData.findOne({ RBR: "RPD" }).then(async (value) => {
       this.bonusRate = value;
 
       if (this.bonusRate == null) {
-        //If RBR hasn't been created, it creates one
-        await referralBonusRate.create({
-          RBR: "RBR",
+        //If RPD hasn't been created, it creates one
+        this.bonusRate = await referralProgramData.create({
+          RPD: "RPD",
           decimal: decimals,
           levelRate: levelRate,
           discountDays: discountDays,
           referralBonus: referralBonus,
           discountBonus: discountBonus,
           totalRewardsAvailableForClaim: 0,
+          users: { users: "users referral links" },
         });
       }
     });
@@ -90,19 +92,76 @@ module.exports = class Referral {
     return false;
   }
 
-  async createReferralCode(string) {
-    // return the hash of string as part of user referral code
+  async createReferralCode(username, sender) {
+    let userNewReferralLink = username; // Hash of username as part of user referral code
+
+    // add username to DB for all users
+    let ob = await this.getObject(
+      this.bonusRate.users,
+      username,
+      userNewReferralLink
+    );
+
+    this.bonusRate.users = ob;
+    this.bonusRate.save();
+
+    // gets account DB of user that wants an account created
+    let senderAccount = await account.findOne({ user: sender });
+
+    // gets links DB of user that wants an account created
+    let senderLinks = await link.findOne({ user: sender });
+
+    let userNewReferral = {};
+    userNewReferral[username] = userNewReferralLink;
+
+    // check if accounts are already created
+    if (senderAccount == null && senderLinks == null) {
+      // if not create them
+      senderAccount = await account.create({
+        user: sender,
+        referrer: "",
+        reward: 0,
+        date: 0,
+        uplines: [],
+        discount: 0,
+        referredCount: 0,
+      });
+
+      await link.create({
+        user: sender,
+        referralLinks: userNewReferral,
+      });
+      // check if link DB hasn't been created yet
+    } else if (senderAccount != null && senderLinks == null) {
+      // if not create one
+      await link.create({
+        user: sender,
+        referralLinks: userNewReferral,
+      });
+    } else {
+      // If both accounts has been create means user wants to create multiple referral links
+      let userLinks = await link.findOne({ user: sender });
+
+      let obj = await this.getObject(
+        userLinks.referralLinks,
+        username,
+        userNewReferralLink
+      );
+
+      userLinks.referralLinks = obj;
+      await userLinks.save();
+    }
+
+    return userNewReferralLink;
   }
 
   /**
    * @dev Add an address as referrer
    */
   async addReferrer(referrer, sender) {
-    /*
-    Given addReferrer function will be called only when users
-    builds a position via someones referral link, the referred 
-    account is also created as the senders account.
-  */
+    // gets referrer address from checking the address tied
+    // to the referral link.
+
     let referrerAccount = await account.findOne({ user: referrer });
     let userAccount = await account.findOne({ user: sender });
 
@@ -115,17 +174,10 @@ module.exports = class Referral {
     }
 
     if (referrerAccount == null) {
-      referrerAccount = await account.create({
-        user: referrer,
-        referrer: "",
-        reward: 0,
-        date: 0,
-        uplines: [],
-        discount: 0,
-        referredCount: 0,
-      });
+      return { reason: "referrer account doesn't exist" };
     }
 
+    // checks if user adding a referral has a created account or not
     if (userAccount == null) {
       await account.create({
         user: sender,
@@ -137,6 +189,8 @@ module.exports = class Referral {
         referredCount: 0,
       });
     } else if (userAccount.referrer == "") {
+      // if they already do check if the referrer as they might not
+      // have one if they only created a referral link and wasn't referred by anyone
       userAccount.referrer = referrer;
       await userAccount.save();
     }
@@ -158,6 +212,10 @@ module.exports = class Referral {
     let uplines = [];
 
     for (let i = 0; i < bonus.levelRate.length; i++) {
+      // gets the next upline of user that built a position and pays them i.e;
+      // userThatBuiltPosition ---> referrer --- 1st direct upline
+      // 1st direct upline ---> referrer --- 2nd direct upline
+      // 2nd direct upline ---> referrer --- 3rd direct upline......pays to the depth set by levelRate
       let parent = userAccount.referrer;
       let parentAccount = await account.findOne({ user: userAccount.referrer });
 
@@ -240,7 +298,35 @@ module.exports = class Referral {
     return this.bonusRate.totalRewardsAvailableForClaim;
   }
 
+  /**
+   * @dev Creates new object
+   */
+  async getObject(obj, key, value) {
+    let newObj = { ...obj };
+    newObj[key] = value;
+
+    return newObj;
+  }
+
   getDateInSeconds() {
     return Math.floor(Date.now() / 1000);
+  }
+
+  /**
+   * @dev Used to check if user name already exist or not
+   * in the referral program
+   */
+  async checkForUsernameInProgram(username) {
+    let result = await this.bonusRate.users[`${username}`];
+    return result != undefined;
+  }
+
+  /**
+   * @dev Used to check if user has the passed link
+   */
+  async checkForUserReferralLink(sender, link) {
+    let userLinks = await link.findOne({ user: sender });
+    let result = await userLinks.referralLinks[`${link}`];
+    return result != undefined;
   }
 };
