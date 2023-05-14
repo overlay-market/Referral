@@ -18,13 +18,13 @@ module.exports = class Referral {
     if (referralBonus > decimals) return "Referral bonus exceeds 100%";
     if (this.sum(levelRate) > decimals) return "Total level rate exceeds 100%";
 
-    // check if RBR collection already has 'RBR' data
+    // check if RPD collection already has 'RPD' data
     referralProgramData.findOne({ RBR: "RPD" }).then(async (value) => {
-      this.bonusRate = value;
+      this.programData = value;
 
-      if (this.bonusRate == null) {
+      if (this.programData == null) {
         //If RPD hasn't been created, it creates one
-        this.bonusRate = await referralProgramData.create({
+        this.programData = await referralProgramData.create({
           RPD: "RPD",
           decimal: decimals,
           levelRate: levelRate,
@@ -76,7 +76,7 @@ module.exports = class Referral {
     let parent = referrer;
     let parentAccount = await account.findOne({ user: parent });
 
-    for (let i = 0; i < this.bonusRate.levelRate.length; i++) {
+    for (let i = 0; i < this.programData.levelRate.length; i++) {
       if (parent == referee) return true;
 
       if (parentAccount != null) {
@@ -97,13 +97,13 @@ module.exports = class Referral {
 
     // add username to DB for all users
     let ob = await this.getObject(
-      this.bonusRate.users,
+      this.programData.users,
       username,
       userNewReferralLink
     );
 
-    this.bonusRate.users = ob;
-    this.bonusRate.save();
+    this.programData.users = ob;
+    this.programData.save();
 
     // gets account DB of user that wants an account created
     let senderAccount = await account.findOne({ user: sender });
@@ -122,7 +122,6 @@ module.exports = class Referral {
         referrer: "",
         reward: 0,
         date: 0,
-        uplines: [],
         discount: 0,
         referredCount: 0,
       });
@@ -159,9 +158,6 @@ module.exports = class Referral {
    * @dev Add an address as referrer
    */
   async addReferrer(referrer, sender) {
-    // gets referrer address from checking the address tied
-    // to the referral link.
-
     let referrerAccount = await account.findOne({ user: referrer });
     let userAccount = await account.findOne({ user: sender });
 
@@ -184,7 +180,6 @@ module.exports = class Referral {
         referrer: referrer,
         reward: 0,
         date: this.getDateInSeconds(),
-        uplines: [],
         discount: 0,
         referredCount: 0,
       });
@@ -207,11 +202,9 @@ module.exports = class Referral {
   async updateReferral(value, sender) {
     let userAccount = await account.findOne({ user: sender });
     let user = await account.findOne({ user: sender });
+    let data = this.programData;
 
-    let bonus = this.bonusRate;
-    let uplines = [];
-
-    for (let i = 0; i < bonus.levelRate.length; i++) {
+    for (let i = 0; i < data.levelRate.length; i++) {
       // gets the next upline of user that built a position and pays them i.e;
       // userThatBuiltPosition ---> referrer --- 1st direct upline
       // 1st direct upline ---> referrer --- 2nd direct upline
@@ -223,48 +216,47 @@ module.exports = class Referral {
         break;
       }
 
-      uplines.push(parent);
-
       // calculates the portion of fees an upline gets
-      let c = (value * bonus.referralBonus) / bonus.decimal;
-      c = (c * bonus.levelRate[i]) / bonus.decimal;
+      let c = (value * data.referralBonus) / data.decimal;
+      c = (c * data.levelRate[i]) / data.decimal;
 
       parentAccount.reward += c;
-      bonus.totalRewardsAvailableForClaim += c;
+      data.totalRewardsAvailableForClaim += c;
 
-      await bonus.save();
+      await data.save();
       await parentAccount.save();
 
       userAccount = parentAccount;
     }
 
     // gets discount as a new user for the duration of discountDays
-    if (user.date + bonus.discountDays > this.getDateInSeconds()) {
-      let discount = (value * bonus.discountBonus) / bonus.decimal;
+    if (user.date + data.discountDays > this.getDateInSeconds()) {
+      let discount = (value * data.discountBonus) / data.decimal;
       user.discount = user.discount + discount;
       await user.save();
-    }
-
-    await this.updateUpline(uplines, user);
-  }
-
-  /**
-   * @dev Updates users uplines
-   */
-  async updateUpline(uplines, userAccount) {
-    if (uplines.length > this.bonusRate.levelRate.length) return;
-    if (uplines.length > userAccount.uplines.length) {
-      userAccount.uplines = uplines;
-      await userAccount.save();
     }
   }
 
   /**
    * @dev gets users uplines
    */
-  async getUplines(sender) {
+  async getUserUplines(sender) {
+    let uplines = [];
     let userAccount = await account.findOne({ user: sender });
-    return userAccount.uplines;
+
+    for (let i = 0; i < this.programData.levelRate.length; i++) {
+      let parent = userAccount.referrer;
+      let parentAccount = await account.findOne({ user: userAccount.referrer });
+
+      if (parent == "") {
+        break;
+      }
+
+      uplines.push(parent);
+      userAccount = parentAccount;
+    }
+
+    return uplines;
   }
 
   /**
@@ -295,7 +287,7 @@ module.exports = class Referral {
    * @dev gets total rewards available for claiming
    */
   async getTotalRewardsAvailableForClaim() {
-    return this.bonusRate.totalRewardsAvailableForClaim;
+    return this.programData.totalRewardsAvailableForClaim;
   }
 
   /**
@@ -317,7 +309,7 @@ module.exports = class Referral {
    * in the referral program
    */
   async checkForUsernameInProgram(username) {
-    let result = await this.bonusRate.users[`${username}`];
+    let result = await this.programData.users[`${username}`];
     return result != undefined;
   }
 

@@ -166,7 +166,7 @@ describe("Referral Program", async function () {
         await build(users[i]);
       }
 
-      let uplines = await referral.getUplines(owner.address);
+      let uplines = await referral.getUserUplines(owner.address);
       let firstUplineBeforeBuild = await referral.getUserReferralReward(
         uplines[0]
       );

@@ -62,8 +62,11 @@ function getAddress(address, abii) {
 }
 
 /**
- * @dev addReferrer() will be visible to only users that joins via a users
- * referral link
+ * @dev addReferrer() will be called automatically when
+ * an existing users referral link is used to access our
+ * website and the new user connects his address via metamask.
+ * @param referrer will be gotten from checking the address
+ * tied to the referral link.
  */
 async function addReferral(referral, referrer, sender) {
   const result = await referral.addReferrer(referrer, sender);
@@ -72,7 +75,7 @@ async function addReferral(referral, referrer, sender) {
 
 /**
  * @dev Reads event from Build(),
- * Calculates the tradingFee and calls referral class
+ * Calculates the tradingFee and calls referral class.
  */
 async function read(sender, id, referral, stateContract, marketContract) {
   if (await referral.hasReferrer(sender)) {
