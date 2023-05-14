@@ -238,7 +238,7 @@ module.exports = class Referral {
   }
 
   /**
-   * @dev gets users uplines
+   * @dev gets users uplines by depth of levelRate
    */
   async getUserUplines(sender) {
     let uplines = [];
