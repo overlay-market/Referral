@@ -206,9 +206,9 @@ module.exports = class Referral {
 
     for (let i = 0; i < data.levelRate.length; i++) {
       // gets the next upline of user that built a position and pays them i.e;
-      // userThatBuiltPosition ---> referrer --- 1st direct upline
-      // 1st direct upline ---> referrer --- 2nd direct upline
-      // 2nd direct upline ---> referrer --- 3rd direct upline......pays to the depth set by levelRate
+      // userThatBuiltPosition ---> referrer --- 1stDirectUpline
+      // userThatBuiltPosition ---> 1stDirectUpline.referrer --- 2ndDirectUpline
+      // userThatBuiltPosition ---> 2ndDirectUpline.referrer --- 3rdDirectUpline......pays to the depth set by levelRate
       let parent = userAccount.referrer;
       let parentAccount = await account.findOne({ user: userAccount.referrer });
 
