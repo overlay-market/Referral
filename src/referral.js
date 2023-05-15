@@ -19,7 +19,7 @@ module.exports = class Referral {
     if (this.sum(levelRate) > decimals) return "Total level rate exceeds 100%";
 
     // check if RPD collection already has 'RPD' data
-    referralProgramData.findOne({ RBR: "RPD" }).then(async (value) => {
+    referralProgramData.findOne({ RPD: "RPD" }).then(async (value) => {
       this.programData = value;
 
       if (this.programData == null) {
@@ -72,24 +72,22 @@ module.exports = class Referral {
   /**
    * @dev check if referee is one of referrer uplines
    */
-  async isCircularReference(referrer, referee) {
+  async isPartOfUpline(referrer, user) {
     let parent = referrer;
     let parentAccount = await account.findOne({ user: parent });
 
-    for (let i = 0; i < this.programData.levelRate.length; i++) {
-      if (parent == referee) return true;
+    if (parent == user) return true;
 
-      if (parentAccount != null) {
-        if (parentAccount.referrer == referee) return true;
-        if (parentAccount.referrer == "") break;
-      } else {
-        break;
+    while (parentAccount != null) {
+      if (parentAccount.referrer === user) {
+        return true; // User is part of the upline hierarchy
       }
 
-      parent = await account.findOne({ user: parent }).referrer;
+      parent = parentAccount.referrer;
+      parentAccount = await account.findOne({ user: parent });
     }
 
-    return false;
+    return false; // User is not part of the upline hierarchy
   }
 
   async createReferralCode(username, sender) {
@@ -161,7 +159,7 @@ module.exports = class Referral {
     let referrerAccount = await account.findOne({ user: referrer });
     let userAccount = await account.findOne({ user: sender });
 
-    if (await this.isCircularReference(referrer, sender)) {
+    if (await this.isPartOfUpline(referrer, sender)) {
       return { tx: false, reason: "Referee cannot be one of referrer uplines" };
     }
 
@@ -244,6 +242,8 @@ module.exports = class Referral {
     let uplines = [];
     let userAccount = await account.findOne({ user: sender });
 
+    if (!this.hasReferrer(sender)) return [];
+
     for (let i = 0; i < this.programData.levelRate.length; i++) {
       let parent = userAccount.referrer;
       let parentAccount = await account.findOne({ user: userAccount.referrer });
@@ -320,5 +320,13 @@ module.exports = class Referral {
     let userLinks = await link.findOne({ user: sender });
     let result = await userLinks.referralLinks[`${link}`];
     return result != undefined;
+  }
+
+  /**
+   * @dev Used to set new level rate
+   */
+  async setLevelRate(newRate) {
+    this.programData.levelRate = newRate;
+    this.programData.save();
   }
 };

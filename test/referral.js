@@ -209,5 +209,16 @@ describe("Referral Program", async function () {
       let discountAfterBuild = await referral.getUserDiscount(user.address);
       expect(discountBeforeBuild).to.be.equal(discountAfterBuild);
     });
+
+    it("Should change level rate", async function () {
+      await referral.createReferralCode("user", `${user.address}`);
+      await addReferral(referral, user.address, user1.address);
+
+      await addReferral(referral, user1.address, user2.address);
+      await addReferral(referral, user2.address, user3.address);
+
+      await addReferral(referral, user3.address, user4.address);
+      await referral.setLevelRate([400, 350, 250]);
+    });
   });
 });
