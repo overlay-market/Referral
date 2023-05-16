@@ -47,8 +47,8 @@ describe("Referral Program", async function () {
     [user, user1, user2, user3, user4, user5, user6] =
       await ethers.getSigners();
 
-    referrals = [user, user1, user2];
-    let len = [user, user1];
+    referrals = [user4, user5, user1];
+    let len = [user, user2];
 
     SOL_USDmarket = await getLiveAddress(config.MARKETS["SOL/USD"]);
     ovl = await getLiveAddress(
@@ -99,7 +99,7 @@ describe("Referral Program", async function () {
     }
 
     it("Should fail and return user has no upline", async function () {
-      await ovl.connect(user1).transfer(user4.address, "2000000000000000000");
+      await ovl.connect(owner).transfer(user4.address, "2000000000000000000");
       await ovl
         .connect(user4)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
@@ -108,21 +108,8 @@ describe("Referral Program", async function () {
       expect(result).to.be.equal("user has no referral");
     });
 
-    it("Should fail and return referee cannot be one of referrer uplines", async function () {
-      await ovl.connect(owner).transfer(user6.address, "4000000000000000000");
-      await ovl
-        .connect(user6)
-        .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
-
-      await referral.createReferralCode("jhjyy", user.address);
-      await addReferral(referral, user.address, user6.address);
-
-      const result = await addReferral(referral, user6.address, user6.address);
-      expect(result).to.be.equal("Referee cannot be one of referrer uplines");
-    });
-
     it("Should add referral", async function () {
-      await ovl.connect(user1).transfer(user4.address, "2000000000000000000");
+      await ovl.connect(owner).transfer(user4.address, "2000000000000000000");
       await ovl
         .connect(user4)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
@@ -138,7 +125,7 @@ describe("Referral Program", async function () {
     });
 
     it("Should update referral count", async function () {
-      await ovl.connect(user1).transfer(user5.address, "2000000000000000000");
+      await ovl.connect(owner).transfer(user5.address, "2000000000000000000");
       await ovl
         .connect(user5)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
@@ -159,7 +146,7 @@ describe("Referral Program", async function () {
     });
 
     it("Should pay all uplines", async function () {
-      let users = [owner, user, user1];
+      let users = [owner, user, user2];
 
       for (let i = 0; i < users.length; i++) {
         await addReferral(referral, referrals[i].address, users[i].address);
@@ -180,7 +167,7 @@ describe("Referral Program", async function () {
     });
 
     it("Should fail and return already has a referral", async function () {
-      const result = await addReferral(referral, owner.address, user6.address);
+      const result = await addReferral(referral, owner.address, user2.address);
       expect(result).to.be.equal("already has a referral");
     });
 
@@ -203,22 +190,19 @@ describe("Referral Program", async function () {
     });
 
     it("Discount should remain same if users date is set to zero", async function () {
-      let discountBeforeBuild = await referral.getUserDiscount(user.address);
+      let discountBeforeBuild = await referral.getUserDiscount(user1.address);
       await build(user);
 
-      let discountAfterBuild = await referral.getUserDiscount(user.address);
+      let discountAfterBuild = await referral.getUserDiscount(user1.address);
       expect(discountBeforeBuild).to.be.equal(discountAfterBuild);
     });
 
     it("Should change level rate", async function () {
-      await referral.createReferralCode("user", `${user.address}`);
-      await addReferral(referral, user.address, user1.address);
-
-      await addReferral(referral, user1.address, user2.address);
-      await addReferral(referral, user2.address, user3.address);
-
-      await addReferral(referral, user3.address, user4.address);
+      let rate = await referral.getLevelRate();
+      expect(rate.length).to.be.equal(4);
       await referral.setLevelRate([400, 350, 250]);
+      rate = await referral.getLevelRate();
+      expect(rate.length).to.be.equal(3);
     });
   });
 });

@@ -55,7 +55,7 @@ module.exports = class Referral {
   async hasReferrer(addr) {
     const userAccount = await account.findOne({ user: addr });
     if (userAccount != null) {
-      return userAccount.referrer != "";
+      return true;
     } else {
       return false;
     }
@@ -67,27 +67,6 @@ module.exports = class Referral {
   async isUser(addr) {
     const userAccount = await account.findOne({ user: addr });
     return userAccount != null;
-  }
-
-  /**
-   * @dev check if referee is one of referrer uplines
-   */
-  async isPartOfUpline(referrer, user) {
-    let parent = referrer;
-    let parentAccount = await account.findOne({ user: parent });
-
-    if (parent == user) return true;
-
-    while (parentAccount != null) {
-      if (parentAccount.referrer === user) {
-        return true; // User is part of the upline hierarchy
-      }
-
-      parent = parentAccount.referrer;
-      parentAccount = await account.findOne({ user: parent });
-    }
-
-    return false; // User is not part of the upline hierarchy
   }
 
   async createReferralCode(username, sender) {
@@ -159,10 +138,6 @@ module.exports = class Referral {
     let referrerAccount = await account.findOne({ user: referrer });
     let userAccount = await account.findOne({ user: sender });
 
-    if (await this.isPartOfUpline(referrer, sender)) {
-      return { tx: false, reason: "Referee cannot be one of referrer uplines" };
-    }
-
     if (await this.hasReferrer(sender)) {
       return { tx: false, reason: "already has a referral" };
     }
@@ -181,11 +156,6 @@ module.exports = class Referral {
         discount: 0,
         referredCount: 0,
       });
-    } else if (userAccount.referrer == "") {
-      // if they already do check if the referrer as they might not
-      // have one if they only created a referral link and wasn't referred by anyone
-      userAccount.referrer = referrer;
-      await userAccount.save();
     }
 
     referrerAccount.referredCount = referrerAccount.referredCount + 1;
@@ -242,7 +212,7 @@ module.exports = class Referral {
     let uplines = [];
     let userAccount = await account.findOne({ user: sender });
 
-    if (!this.hasReferrer(sender)) return [];
+    if (!this.hasReferrer(sender) || userAccount.referrer == "") return [];
 
     for (let i = 0; i < this.programData.levelRate.length; i++) {
       let parent = userAccount.referrer;
@@ -257,6 +227,77 @@ module.exports = class Referral {
     }
 
     return uplines;
+  }
+
+  /**
+   * @dev Used to check if user name already exist or not
+   * in the referral program
+   */
+  async checkForUsernameInProgram(username) {
+    let result = await this.programData.users[`${username}`];
+    return result != undefined;
+  }
+
+  /**
+   * @dev Used to check if user has the passed link
+   */
+  async checkForUserReferralLink(sender, link) {
+    let userLinks = await link.findOne({ user: sender });
+    let result = await userLinks.referralLinks[`${link}`];
+    return result != undefined;
+  }
+
+  /**
+   * @dev Used to set new level rate
+   */
+  async setLevelRate(newRate) {
+    this.programData.levelRate = newRate;
+    this.programData.save();
+  }
+
+  /**
+   * @dev Used to set new discount days
+   */
+  async setDiscountDays(newValue) {
+    this.programData.discountDays = newValue;
+    this.programData.save();
+  }
+
+  /**
+   * @dev Used to set new referral bonus value
+   */
+  async setReferralBonus(newValue) {
+    this.programData.referralBonus = newValue;
+    this.programData.save();
+  }
+
+  /**
+   * @dev gets referral bonus
+   */
+  async getReferralBonus() {
+    return this.programData.referralBonus;
+  }
+
+  /**
+   * @dev gets referral bonus
+   */
+  async getLevelRate() {
+    return this.programData.levelRate;
+  }
+
+  /**
+   * @dev gets discount days
+   */
+  async getDiscountDays() {
+    return this.programData.discountDays;
+  }
+
+  /**
+   * @dev Used to set new discount bonus value
+   */
+  async setDiscountBonus(newValue) {
+    this.programData.discountBonus = newValue;
+    this.programData.save();
   }
 
   /**
@@ -302,31 +343,5 @@ module.exports = class Referral {
 
   getDateInSeconds() {
     return Math.floor(Date.now() / 1000);
-  }
-
-  /**
-   * @dev Used to check if user name already exist or not
-   * in the referral program
-   */
-  async checkForUsernameInProgram(username) {
-    let result = await this.programData.users[`${username}`];
-    return result != undefined;
-  }
-
-  /**
-   * @dev Used to check if user has the passed link
-   */
-  async checkForUserReferralLink(sender, link) {
-    let userLinks = await link.findOne({ user: sender });
-    let result = await userLinks.referralLinks[`${link}`];
-    return result != undefined;
-  }
-
-  /**
-   * @dev Used to set new level rate
-   */
-  async setLevelRate(newRate) {
-    this.programData.levelRate = newRate;
-    this.programData.save();
   }
 };
