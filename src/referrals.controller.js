@@ -23,9 +23,7 @@ async function httpCreateReferralCode(req, res) {
 }
 
 async function httpAddReferral(req, res) {
-  let referralDetails = +req.body;
-
-  console.log(referralDetails);
+  let referralDetails = req.body;
   const result = await referral.addReferrer(referralDetails);
 
   if (result) {
