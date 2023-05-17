@@ -11,7 +11,7 @@ module.exports = class Referral {
     discountDays,
     discountBonus
   ) {
-    if ((levelRate.length <= 0, "Referral level should be at least one"));
+    if (levelRate.length <= 0) return "Referral level should be at least one";
     if (levelRate.length > maxReferDepth)
       return "Exceeded max referral level depth";
 
@@ -70,7 +70,7 @@ module.exports = class Referral {
   }
 
   async createReferralCode(username, sender) {
-    let userNewReferralLink = username; // Hash of username as part of user referral code
+    let userNewReferralLink = "https://overlay.market/username"; // Hash of username as part of user referral code
 
     // add username to DB for all users
     let ob = await this.getObject(
