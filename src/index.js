@@ -7,7 +7,7 @@ const { createServer } = require("http");
 const referralClass = require("./referral");
 const { mongoConnect } = require("./services/mongo");
 
-const app = express();
+const app = require("./app");
 const server = createServer(app);
 
 const {
@@ -30,29 +30,29 @@ const referral = new referralClass(
 );
 
 //Listen to OVL live markets events
-SOL_USDmarket.on("Build", async (sender, positionId) => {
-  await read(SOL_USDmarket, sender, positionId, referral);
-});
+// SOL_USDmarket.on("Build", async (sender, positionId) => {
+//   await read(SOL_USDmarket, sender, positionId, referral);
+// });
 
-APE_USDmarket.on("Build", async (sender, positionId) => {
-  await read(APE_USDmarket, sender, positionId, referral);
-});
+// APE_USDmarket.on("Build", async (sender, positionId) => {
+//   await read(APE_USDmarket, sender, positionId, referral);
+// });
 
-AVAX_USDmarket.on("Build", async (sender, positionId) => {
-  await read(AVAX_USDmarket, sender, positionId, referral);
-});
+// AVAX_USDmarket.on("Build", async (sender, positionId) => {
+//   await read(AVAX_USDmarket, sender, positionId, referral);
+// });
 
-MATIC_USDmarket.on("Build", async (sender, positionId) => {
-  await read(MATIC_USDmarket, sender, positionId, referral);
-});
+// MATIC_USDmarket.on("Build", async (sender, positionId) => {
+//   await read(MATIC_USDmarket, sender, positionId, referral);
+// });
 
-WBTC_USDmarket.on("Build", async (sender, positionId) => {
-  await read(WBTC_USDmarket, sender, positionId, referral);
-});
+// WBTC_USDmarket.on("Build", async (sender, positionId) => {
+//   await read(WBTC_USDmarket, sender, positionId, referral);
+// });
 
-LINK_USDmarket.on("Build", async (sender, positionId) => {
-  await read(LINK_USDmarket, sender, positionId, referral);
-});
+// LINK_USDmarket.on("Build", async (sender, positionId) => {
+//   await read(LINK_USDmarket, sender, positionId, referral);
+// });
 
 server.listen(8080, async function () {
   await mongoConnect();
