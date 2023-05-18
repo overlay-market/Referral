@@ -25,6 +25,9 @@ const accountSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  referralLinks: {
+    type: Object,
+  },
 });
 
 // connect accountSchema with the "accounts" collection

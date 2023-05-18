@@ -11,26 +11,26 @@ const referral = new referralClass(
 
 async function httpCreateReferralCode(req, res) {
   let referralDetails = req.body;
-  const result = await referral.createReferralCode(referralDetails);
 
-  if (result) {
-    res.status(201).json(referralDetails);
-  } else {
-    return res.status(400).json({
-      error: result,
+  try {
+    const result = await referral.createReferralCode(referralDetails);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(400).json({
+      error: error.message,
     });
   }
 }
 
 async function httpAddReferral(req, res) {
   let referralDetails = req.body;
-  const result = await referral.addReferrer(referralDetails);
 
-  if (result) {
-    res.status(201).json(referralDetails);
-  } else {
-    return res.status(400).json({
-      error: result,
+  try {
+    const result = await referral.addReferrer(referralDetails);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(400).json({
+      error: error.message,
     });
   }
 }
@@ -86,6 +86,11 @@ async function httpGetUserAddressViaLink(req, res) {
   return res.status(200).json(await referral.getUserAddressViaLink(link));
 }
 
+async function httpHasReferrer(req, res) {
+  const address = req.params.address;
+  return res.status(200).json(await referral.hasReferrer(address));
+}
+
 async function httpGetTotalRewardsAvailableForClaim(req, res) {
   return res
     .status(200)
@@ -109,12 +114,6 @@ async function httpGetReferralBonus(req, res) {
   return res.status(200).json(await referral.getReferralBonus());
 }
 
-// async function httpGetAllLaunches(req, res) {
-//   const { skip, limit } = getPagination(req.query);
-//   const launches = await getAllLaunches(skip, limit);
-//   return res.status(200).json(launches);
-// }
-
 module.exports = {
   httpGetTotalRewardsAvailableForClaim,
   httpCheckForUsernameInProgram,
@@ -128,4 +127,5 @@ module.exports = {
   httpGetLevelRate,
   httpGetUserInfo,
   httpAddReferral,
+  httpHasReferrer,
 };

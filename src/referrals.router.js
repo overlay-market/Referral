@@ -13,6 +13,7 @@ const {
   httpGetLevelRate,
   httpGetUserInfo,
   httpAddReferral,
+  httpHasReferrer,
 } = require("./referrals.controller");
 
 referralsRouter.get("/totalRewards", httpGetTotalRewardsAvailableForClaim);
@@ -20,6 +21,8 @@ referralsRouter.get("/totalRewards", httpGetTotalRewardsAvailableForClaim);
 referralsRouter.get("/checkUserName/:userName", httpCheckForUsernameInProgram);
 
 referralsRouter.get("/userAddressViaLink/:link", httpGetUserAddressViaLink);
+
+referralsRouter.get("/hasReferrer/:address", httpHasReferrer);
 
 referralsRouter.get("/referralBonus", httpGetReferralBonus);
 

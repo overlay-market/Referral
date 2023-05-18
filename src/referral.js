@@ -1,4 +1,3 @@
-const link = require("../schemas/userLinks.schema");
 const account = require("../schemas/account.schema");
 const referralProgramData = require("../schemas/referralProgramData.schema");
 
@@ -35,7 +34,7 @@ module.exports = class Referral {
           referralBonus: referralBonus,
           discountBonus: discountBonus,
           totalRewardsAvailableForClaim: 0,
-          users: { users: "users referral links" },
+          users: { users: ["users referral links", "users addresses"] },
         });
       }
     });
@@ -73,64 +72,54 @@ module.exports = class Referral {
   }
 
   async createReferralCode(referralDetails) {
-    let userNewReferralLink = "https://overlay.market/referralDetails.username"; // Hash of referralDetails.username as part of user referral code
+    const userNewReferralLink = `https://overlay.market/${referralDetails.username}`; // Hash of referralDetails.username as part of user referral code
 
     // add referralDetails.username to DB for all users
-    let ob = await this.getObject(
+    const obj = await this.getObject(
       this.programData.users,
       referralDetails.username,
-      userNewReferralLink
+      [userNewReferralLink, referralDetails.sender]
     );
 
-    this.programData.users = ob;
-    this.programData.save();
+    this.programData.users = obj;
+    await this.save(this.programData);
 
     // gets account DB of user that wants an account created
     let senderAccount = await account.findOne({
-      user: createReferralCodesender,
+      user: referralDetails.sender,
     });
 
-    // gets links DB of user that wants an account created
-    let senderLinks = await link.findOne({ user: referralDetails.sender });
+    // check if account is already created
+    if (senderAccount == null) {
+      let userNewReferral = {};
+      userNewReferral[referralDetails.username] = userNewReferralLink;
 
-    let userNewReferral = {};
-    userNewReferral[referralDetails.username] = userNewReferralLink;
-
-    // check if accounts are already created
-    if (senderAccount == null && senderLinks == null) {
-      // if not create them
-      senderAccount = await account.create({
-        user: referralDetails.sender,
-        referrer: "",
-        reward: 0,
-        date: 0,
-        discount: 0,
-        referredCount: 0,
-      });
-
-      await link.create({
-        user: referralDetails.sender,
-        referralLinks: userNewReferral,
-      });
-      // check if link DB hasn't been created yet
-    } else if (senderAccount != null && senderLinks == null) {
+      await this.create(referralDetails.sender, "", 0, userNewReferral);
+    } else if (
+      senderAccount != null &&
+      senderAccount.referralLinks["none"] != undefined
+    ) {
+      // Todo
+      // check if user wants to create same link again
       // if not create one
-      await link.create({
-        user: referralDetails.sender,
-        referralLinks: userNewReferral,
-      });
-    } else {
-      // If both accounts has been create means user wants to create multiple referral links
-      let userLinks = await link.findOne({ user: referralDetails.sender });
-
       let obj = await this.getObject(
-        userLinks.referralLinks,
+        {},
         referralDetails.username,
         userNewReferralLink
       );
 
-      userLinks.referralLinks = obj;
-      await userLinks.save();
+      senderAccount.referralLinks = obj;
+      await this.save(senderAccount);
+    } else {
+      // If account has been created and user has one referral link means user wants to create multiple referral links
+      let obj = await this.getObject(
+        senderAccount.referralLinks,
+        referralDetails.username,
+        userNewReferralLink
+      );
+
+      senderAccount.referralLinks = obj;
+      await this.save(senderAccount);
     }
 
     return userNewReferralLink;
@@ -155,18 +144,16 @@ module.exports = class Referral {
 
     // checks if user adding a referral has a created account or not
     if (userAccount == null) {
-      await account.create({
-        user: referralDetails.sender,
-        referrer: referralDetails.referrer,
-        reward: 0,
-        date: this.getDateInSeconds(),
-        discount: 0,
-        referredCount: 0,
-      });
+      await this.create(
+        referralDetails.sender,
+        referralDetails.referrer,
+        this.getDateInSeconds(),
+        { none: "none" }
+      );
     }
 
     referrerAccount.referredCount = referrerAccount.referredCount + 1;
-    await referrerAccount.save();
+    await this.save(referrerAccount);
 
     return true;
   }
@@ -198,8 +185,8 @@ module.exports = class Referral {
       parentAccount.reward += c;
       data.totalRewardsAvailableForClaim += c;
 
-      await data.save();
-      await parentAccount.save();
+      await this.save(data);
+      await this.save(parentAccount);
 
       userAccount = parentAccount;
     }
@@ -208,7 +195,7 @@ module.exports = class Referral {
     if (user.date + data.discountDays > this.getDateInSeconds()) {
       let discount = (value * data.discountBonus) / data.decimal;
       user.discount = user.discount + discount;
-      await user.save();
+      await this.save(user);
     }
   }
 
@@ -249,9 +236,8 @@ module.exports = class Referral {
    * @dev Used to check if user has the passed link
    */
   async getUserAddressViaLink(userLink) {
-    let userLinks = await link.findOne({ referralLinks: userLink });
-    let result = userLinks.user;
-    return result;
+    let result = await this.programData.users[`${userLink}`];
+    return result[1];
   }
 
   /**
@@ -259,7 +245,7 @@ module.exports = class Referral {
    */
   async setLevelRate(levelRate) {
     this.programData.levelRate = levelRate.newRate;
-    this.programData.save();
+    await this.save(this.programData);
   }
 
   /**
@@ -267,7 +253,7 @@ module.exports = class Referral {
    */
   async setDiscountDays(discountDays) {
     this.programData.discountDays = discountDays.newValue;
-    this.programData.save();
+    await this.save(this.programData);
   }
 
   /**
@@ -275,7 +261,7 @@ module.exports = class Referral {
    */
   async setReferralBonus(newValue) {
     this.programData.referralBonus = newValue;
-    this.programData.save();
+    await this.save(this.programData);
   }
 
   /**
@@ -304,7 +290,7 @@ module.exports = class Referral {
    */
   async setDiscountBonus(newValue) {
     this.programData.discountBonus = newValue;
-    this.programData.save();
+    await this.save(this.programData);
   }
 
   /**
@@ -330,6 +316,38 @@ module.exports = class Referral {
     newObj[key] = value;
 
     return newObj;
+  }
+
+  /**
+   * @dev Creates new DB for account collection.
+   */
+  async create(sender, referrer, date, referralLink) {
+    try {
+      await account.create({
+        user: sender,
+        referrer: referrer,
+        reward: 0,
+        date: date,
+        discount: 0,
+        referredCount: 0,
+        referralLinks: referralLink,
+      });
+    } catch (error) {
+      throw new Error(`Error creating account in collection: ` + error.message);
+    }
+  }
+
+  /**
+   * @dev Saves updates made to a collection.
+   */
+  async save(collection) {
+    try {
+      await collection.save();
+    } catch (error) {
+      throw new Error(
+        `Error saving ${collection} collection: ` + error.message
+      );
+    }
   }
 
   getDateInSeconds() {

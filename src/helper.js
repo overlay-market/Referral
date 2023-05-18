@@ -62,18 +62,6 @@ function getAddress(address, abii) {
 }
 
 /**
- * @dev addReferrer() will be called automatically when
- * an existing users referral link is used to access our
- * website and the new user connects his address via metamask.
- * @param referrer will be gotten from checking the address
- * tied to the referral link.
- */
-async function addReferral(referral, referrer, sender) {
-  const result = await referral.addReferrer(referrer, sender);
-  return result["reason"];
-}
-
-/**
  * @dev Reads event from Build(),
  * Calculates the tradingFee and calls referral class.
  */
@@ -93,7 +81,6 @@ async function read(sender, id, referral, stateContract, marketContract) {
 
 module.exports = {
   read,
-  addReferral,
   impersonate,
   fork_network,
   SOL_USDmarket,
