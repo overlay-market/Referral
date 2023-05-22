@@ -26,8 +26,7 @@ async function httpAddReferral(req, res) {
   let referralDetails = req.body;
 
   try {
-    const result = await referral.addReferrer(referralDetails);
-    res.status(201).json(result);
+    res.status(201).json(await referral.addReferrer(referralDetails));
   } catch (error) {
     res.status(400).json({
       error: error.message,
@@ -37,39 +36,52 @@ async function httpAddReferral(req, res) {
 
 async function httpSetLevelRate(req, res) {
   let levelRate = req.body;
-  const result = await referral.setLevelRate(levelRate);
 
-  if (result) {
-    res.status(201).json(levelRate);
-  } else {
-    return res.status(400).json({
-      error: result,
+  try {
+    await referral.setLevelRate(levelRate);
+    res.status(201).json("New Level Rate Set");
+  } catch (error) {
+    res.status(400).json({
+      error: error.message,
     });
   }
 }
 
 async function httpSetDiscountDays(req, res) {
   let discountDays = req.body;
-  const result = await referral.setDiscountDays(discountDays);
 
-  if (result) {
-    res.status(201).json(discountDays);
-  } else {
-    return res.status(400).json({
-      error: result,
+  try {
+    await referral.setDiscountDays(discountDays);
+    res.status(201).json("New Discount Days  Set");
+  } catch (error) {
+    res.status(400).json({
+      error: error.message,
     });
   }
 }
 
 async function httpSetReferralBonus(req, res) {
   let bonus = req.body;
-  const result = await referral.setReferralBonus(bonus);
 
-  if (result) {
-    res.status(201).json(bonus);
-  } else {
-    return res.status(400).json({
-      error: result,
+  try {
+    await referral.setReferralBonus(bonus);
+    res.status(201).json("New Referral Bonus Set");
+  } catch (error) {
+    res.status(400).json({
+      error: error.message,
+    });
+  }
+}
+
+async function httpSetDiscountBonus(req, res) {
+  let bonus = req.body;
+
+  try {
+    await referral.setDiscountBonus(bonus);
+    res.status(201).json("New Discount Bonus Set");
+  } catch (error) {
+    res.status(400).json({
+      error: error.message,
     });
   }
 }
@@ -83,7 +95,7 @@ async function httpCheckForUsernameInProgram(req, res) {
 
 async function httpGetUserAddressViaLink(req, res) {
   let link = req.params.link;
-  return res.status(200).json(await referral.getUserAddressViaLink(link));
+  res.status(200).json(await referral.getUserAddressViaLink(link));
 }
 
 async function httpHasReferrer(req, res) {
@@ -91,40 +103,24 @@ async function httpHasReferrer(req, res) {
   return res.status(200).json(await referral.hasReferrer(address));
 }
 
-async function httpGetTotalRewardsAvailableForClaim(req, res) {
-  return res
-    .status(200)
-    .json(await referral.getTotalRewardsAvailableForClaim());
-}
-
 async function httpGetUserInfo(req, res) {
   let userDetails = req.params.user;
   return res.status(200).json(await referral.getUserInfo(userDetails));
 }
 
-async function httpGetDiscountDays(req, res) {
-  return res.status(200).json(await referral.getDiscountDays());
-}
-
-async function httpGetLevelRate(req, res) {
-  return res.status(200).json(await referral.getLevelRate());
-}
-
-async function httpGetReferralBonus(req, res) {
-  return res.status(200).json(await referral.getReferralBonus());
+async function httpGetProgramData(req, res) {
+  return res.status(200).json(await referral.getProgramData());
 }
 
 module.exports = {
-  httpGetTotalRewardsAvailableForClaim,
   httpCheckForUsernameInProgram,
   httpGetUserAddressViaLink,
   httpCreateReferralCode,
   httpSetReferralBonus,
-  httpGetReferralBonus,
+  httpSetDiscountBonus,
   httpSetDiscountDays,
-  httpGetDiscountDays,
+  httpGetProgramData,
   httpSetLevelRate,
-  httpGetLevelRate,
   httpGetUserInfo,
   httpAddReferral,
   httpHasReferrer,

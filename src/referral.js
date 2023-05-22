@@ -72,17 +72,17 @@ module.exports = class Referral {
   }
 
   async createReferralCode(referralDetails) {
-    const userNewReferralLink = `https://overlay.market/${referralDetails.username}`; // Hash of referralDetails.username as part of user referral code
+    const userNewReferralLink = `https://overlay.market/referral/${referralDetails.username}`; // Hash of referralDetails.username as part of user referral code
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
 
     // add referralDetails.username to DB for all users
-    const obj = await this.getObject(
-      this.programData.users,
-      referralDetails.username,
-      [userNewReferralLink, referralDetails.sender]
-    );
+    const obj = await this.getObject(data.users, referralDetails.username, [
+      userNewReferralLink,
+      referralDetails.sender,
+    ]);
 
-    this.programData.users = obj;
-    await this.save(this.programData);
+    data.users = obj;
+    await this.save(data);
 
     // gets account DB of user that wants an account created
     let senderAccount = await account.findOne({
@@ -99,8 +99,6 @@ module.exports = class Referral {
       senderAccount != null &&
       senderAccount.referralLinks["none"] != undefined
     ) {
-      // Todo
-      // check if user wants to create same link again
       // if not create one
       let obj = await this.getObject(
         {},
@@ -155,7 +153,7 @@ module.exports = class Referral {
     referrerAccount.referredCount = referrerAccount.referredCount + 1;
     await this.save(referrerAccount);
 
-    return true;
+    return "referral successfully added";
   }
 
   /**
@@ -228,7 +226,8 @@ module.exports = class Referral {
    * in the referral program
    */
   async checkForUsernameInProgram(userName) {
-    let result = await this.programData.users[`${userName}`];
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    let result = await data.users[`${userName}`];
     return result != undefined;
   }
 
@@ -236,61 +235,56 @@ module.exports = class Referral {
    * @dev Used to check if user has the passed link
    */
   async getUserAddressViaLink(userLink) {
-    let result = await this.programData.users[`${userLink}`];
-    return result[1];
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    let result = await data.users[`${userLink}`];
+    if (result != null) return result[1];
+    else {
+      return "user does not exist";
+    }
   }
 
   /**
    * @dev Used to set new level rate
    */
   async setLevelRate(levelRate) {
-    this.programData.levelRate = levelRate.newRate;
-    await this.save(this.programData);
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    data.levelRate = levelRate.newRate;
+    await this.save(data);
   }
 
   /**
    * @dev Used to set new discount days
    */
   async setDiscountDays(discountDays) {
-    this.programData.discountDays = discountDays.newValue;
-    await this.save(this.programData);
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    data.discountDays = discountDays.newValue;
+    await this.save(data);
   }
 
   /**
    * @dev Used to set new referral bonus value
    */
   async setReferralBonus(newValue) {
-    this.programData.referralBonus = newValue;
-    await this.save(this.programData);
-  }
-
-  /**
-   * @dev gets referral bonus
-   */
-  async getReferralBonus() {
-    return this.programData.referralBonus;
-  }
-
-  /**
-   * @dev gets referral bonus
-   */
-  async getLevelRate() {
-    return this.programData.levelRate;
-  }
-
-  /**
-   * @dev gets discount days
-   */
-  async getDiscountDays() {
-    return this.programData.discountDays;
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    data.referralBonus = newValue.bonus;
+    await this.save(data);
   }
 
   /**
    * @dev Used to set new discount bonus value
    */
   async setDiscountBonus(newValue) {
-    this.programData.discountBonus = newValue;
-    await this.save(this.programData);
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    data.discountBonus = newValue.bonus;
+    await this.save(data);
+  }
+
+  /**
+   * @dev gets referral bonus
+   */
+  async getProgramData() {
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    return data;
   }
 
   /**
@@ -299,13 +293,6 @@ module.exports = class Referral {
   async getUserInfo(user) {
     let userAccount = await account.findOne({ user: user });
     return userAccount;
-  }
-
-  /**
-   * @dev gets total rewards available for claiming
-   */
-  async getTotalRewardsAvailableForClaim() {
-    return this.programData.totalRewardsAvailableForClaim;
   }
 
   /**
