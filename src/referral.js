@@ -72,7 +72,7 @@ module.exports = class Referral {
   }
 
   async createReferralCode(referralDetails) {
-    const userNewReferralLink = `https://overlay.market/referral/${referralDetails.username}`; // Hash of referralDetails.username as part of user referral code
+    const userNewReferralLink = `https://app.overlay.market/#/markets?ref=${referralDetails.username}`; // Hash of referralDetails.username as part of user referral code
     const data = await referralProgramData.findOne({ RPD: "RPD" });
 
     // add referralDetails.username to DB for all users
@@ -130,6 +130,7 @@ module.exports = class Referral {
     let referrerAccount = await account.findOne({
       user: referralDetails.referrer,
     });
+
     let userAccount = await account.findOne({ user: referralDetails.sender });
 
     if (await this.hasReferrer(referralDetails.sender)) {
@@ -225,21 +226,45 @@ module.exports = class Referral {
    * @dev Used to check if user name already exist or not
    * in the referral program
    */
-  async checkForUsernameInProgram(userName) {
+  async checkForUsernameInProgram(userName, sender) {
     const data = await referralProgramData.findOne({ RPD: "RPD" });
     let result = await data.users[`${userName}`];
     return result != undefined;
   }
 
   /**
+   * @dev Used to delete a user referral link
+   */
+  async deleteUserReferralLink(userName) {
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    const result = await data.users[`${userName}`];
+
+    if (result == null) throw new Error("user does not exist");
+    let userAccount = await account.findOne({ user: result[1] });
+
+    let newObj0 = { ...data.users };
+    let newObj1 = { ...userAccount.referralLinks };
+
+    delete newObj0[`${userName}`];
+    delete newObj1[`${userName}`];
+
+    data.users = newObj0;
+    userAccount.referralLinks = newObj1;
+
+    await this.save(data);
+    await this.save(userAccount);
+  }
+
+  /**
    * @dev Used to check if user has the passed link
    */
-  async getUserAddressViaLink(userLink) {
+  async getUserAddressViaLink(userName) {
     const data = await referralProgramData.findOne({ RPD: "RPD" });
-    let result = await data.users[`${userLink}`];
+    let result = await data.users[`${userName}`];
+
     if (result != null) return result[1];
     else {
-      return "user does not exist";
+      throw new Error("user does not exist");
     }
   }
 

@@ -112,9 +112,23 @@ async function httpGetProgramData(req, res) {
   return res.status(200).json(await referral.getProgramData());
 }
 
+async function httpDeleteReferralLink(req, res) {
+  const userName = req.params.userName;
+
+  try {
+    await referral.deleteUserReferralLink(userName);
+    res.status(200).json("Link Deleted");
+  } catch (error) {
+    res.status(400).json({
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   httpCheckForUsernameInProgram,
   httpGetUserAddressViaLink,
+  httpDeleteReferralLink,
   httpCreateReferralCode,
   httpSetReferralBonus,
   httpSetDiscountBonus,

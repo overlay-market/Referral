@@ -3,6 +3,7 @@ const referralsRouter = Router();
 const {
   httpCheckForUsernameInProgram,
   httpGetUserAddressViaLink,
+  httpDeleteReferralLink,
   httpCreateReferralCode,
   httpSetReferralBonus,
   httpSetDiscountBonus,
@@ -35,5 +36,7 @@ referralsRouter.post("/setDiscountBonus", httpSetDiscountBonus);
 referralsRouter.post("/setReferralBonus", httpSetReferralBonus);
 
 referralsRouter.post("/createReferralCode", httpCreateReferralCode);
+
+referralsRouter.delete("/deleteReferralLink/:userName", httpDeleteReferralLink);
 
 module.exports = referralsRouter;
