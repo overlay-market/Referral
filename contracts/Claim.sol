@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: BUSL-1.1
+
+/**
+ * Created on 2023-05-24 01:00
+ * @Summary A smart contract that let users claim referral rewards
+ * @title Claim
+ * @author: Overlay - c-n-o-t-e
+ */
+
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
