@@ -1,7 +1,5 @@
 require("dotenv").config();
 const { assert, expect } = require("chai");
-// const { solidity } = require("ethereum-waffle");
-// chai.use(solidity);
 
 const provider = new ethers.providers.JsonRpcProvider(
   `https://goerli.infura.io/v3/${process.env.ID}`
@@ -107,7 +105,7 @@ describe("Claim", async () => {
     claim.withdrawToken(owner.address, 10000);
   });
 
-  it("Should withdraw", async function () {
+  it("Should fail to withdraw", async function () {
     await expect(
       claim.connect(otherAccount).withdrawToken(owner.address, 10000)
     ).to.be.reverted;
