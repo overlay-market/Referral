@@ -42,9 +42,9 @@ contract Claim is SignerManager {
         bytes memory _data,
         bytes calldata _signature
     ) external {
-       uint256 currentTimestamp = block.timestamp;
+        uint256 currentTimestamp = block.timestamp;
 
-         // Check if 24 hours have passed since the last reset
+        // Check if 24 hours have passed since the last reset
         if (lastResetTimestamp + 24 hours < currentTimestamp) {
             // Reset the total daily withdrawal amount
             totalDailyClaimed = 0;
@@ -63,7 +63,8 @@ contract Claim is SignerManager {
             (uint256, address)
         );
 
-        if(totalDailyClaimed + amount > maxDailyClaim) revert Claim_Exceeded_Daily_Claiming_Limit();
+        if (totalDailyClaimed + amount > maxDailyClaim)
+            revert Claim_Exceeded_Daily_Claiming_Limit();
 
         if (token.balanceOf(address(this)) < amount)
             revert Claim_Contract_Does_Not_Have_Enough_Tokens();
@@ -77,9 +78,9 @@ contract Claim is SignerManager {
         address _recipient,
         uint256 _amount
     ) external onlyOwner {
-        if (token.balanceOf(address(this)) < amount)
+        if (token.balanceOf(address(this)) < _amount)
             revert Claim_Contract_Does_Not_Have_Enough_Tokens();
-            
+
         token.transfer(_recipient, _amount);
     }
 }
