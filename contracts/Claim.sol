@@ -9,80 +9,77 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@divergencetech/ethier/contracts/crypto/SignerManager.sol";
+import "@divergencetech/ethier/contracts/crypto/SignatureChecker.sol";
 
-error Claim_Only_Guardian();
-error Claim_Invalid_Signature();
-error Claim_Must_Have_Admin_Role();
-error Claim_Amount_Must_Be_Above_0();
+error Claim_Exceeded_Daily_Claiming_Limit();
 error Claim_Contract_Does_Not_Have_Enough_Tokens();
 
-contract Claim is AccessControlEnumerable {
-    using ECDSA for bytes32;
+contract Claim is SignerManager {
+    using SignatureChecker for EnumerableSet.AddressSet;
+
+    mapping(bytes32 => bool) private usedMessages;
 
     IERC20 public token;
 
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
-    bytes32 public constant GUARDIAN_ROLE = keccak256("GUARDIAN_ROLE");
+    uint256 public maxDailyClaim;
+    uint256 private totalDailyClaimed;
+    uint256 private lastResetTimestamp;
 
-    constructor(address _tokenAddress) {
+    constructor(address _tokenAddress, uint256 _maxDailyClaim) {
         token = IERC20(_tokenAddress);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        lastResetTimestamp = block.timestamp;
+        maxDailyClaim = _maxDailyClaim;
     }
 
-    modifier onlyGuardian() {
-        if (!hasRole(GUARDIAN_ROLE, msg.sender)) revert Claim_Only_Guardian();
-        _;
-    }
-
-    modifier onlyAdmin() {
-        if (!hasRole(DEFAULT_ADMIN_ROLE, msg.sender))
-            revert Claim_Must_Have_Admin_Role();
-        _;
-    }
-
-    modifier onlyWhenContractHasEnoughTokens(uint256 _amount) {
-        if (token.balanceOf(address(this)) < _amount)
-            revert Claim_Contract_Does_Not_Have_Enough_Tokens();
-        _;
-    }
-
-    function grantNewRole(address account, bytes32 _role) external onlyAdmin {
-        grantRole(_role, account);
-    }
-
-    function revokeExistingRole(
-        address account,
-        bytes32 _role
-    ) external onlyAdmin {
-        revokeRole(_role, account);
+    function setMaxDailyClaim(uint256 _maxDailyClaim) external onlyOwner {
+        maxDailyClaim = _maxDailyClaim;
     }
 
     function claimToken(
-        uint256 _amount,
-        address _recipient,
-        bytes32 _messageHash,
-        bytes memory _signature
-    ) external onlyWhenContractHasEnoughTokens(_amount) {
-        // TODO
-        // Check the max amount to send for a day hasn't been reached
-        bytes32 messageHash = _messageHash.toEthSignedMessageHash();
-        if (_amount == 0) revert Claim_Amount_Must_Be_Above_0();
+        bytes32 _nonce,
+        bytes memory _data,
+        bytes calldata _signature
+    ) external {
+       uint256 currentTimestamp = block.timestamp;
+
+         // Check if 24 hours have passed since the last reset
+        if (lastResetTimestamp + 24 hours < currentTimestamp) {
+            // Reset the total daily withdrawal amount
+            totalDailyClaimed = 0;
+            lastResetTimestamp = currentTimestamp;
+        }
 
         // Verify the signature
-        address signer = messageHash.recover(_signature);
-        if (!hasRole(SIGNER_ROLE, signer)) revert Claim_Invalid_Signature();
+        signers.requireValidSignature(
+            abi.encodePacked(_data, _nonce),
+            _signature,
+            usedMessages
+        );
 
-        token.transfer(_recipient, _amount);
+        (uint256 amount, address recipient) = abi.decode(
+            _data,
+            (uint256, address)
+        );
+
+        if(totalDailyClaimed + amount > maxDailyClaim) revert Claim_Exceeded_Daily_Claiming_Limit();
+
+        if (token.balanceOf(address(this)) < amount)
+            revert Claim_Contract_Does_Not_Have_Enough_Tokens();
+
+        totalDailyClaimed += amount;
+
+        token.transfer(recipient, amount);
     }
 
     function withdrawToken(
         address _recipient,
         uint256 _amount
-    ) external onlyGuardian onlyWhenContractHasEnoughTokens(_amount) {
+    ) external onlyOwner {
+        if (token.balanceOf(address(this)) < amount)
+            revert Claim_Contract_Does_Not_Have_Enough_Tokens();
+            
         token.transfer(_recipient, _amount);
     }
 }
