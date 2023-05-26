@@ -10,13 +10,15 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@divergencetech/ethier/contracts/crypto/SignerManager.sol";
 import "@divergencetech/ethier/contracts/crypto/SignatureChecker.sol";
+
 
 error Claim_Exceeded_Daily_Claiming_Limit();
 error Claim_Contract_Does_Not_Have_Enough_Tokens();
 
-contract Claim is SignerManager {
+contract Claim is ReentrancyGuard, SignerManager {
     using SignatureChecker for EnumerableSet.AddressSet;
 
     mapping(bytes32 => bool) private usedMessages;
@@ -41,7 +43,7 @@ contract Claim is SignerManager {
         bytes32 _nonce,
         bytes memory _data,
         bytes calldata _signature
-    ) external {
+    ) external nonReentrant{
         uint256 currentTimestamp = block.timestamp;
 
         // Check if 24 hours have passed since the last reset

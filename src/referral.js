@@ -72,7 +72,7 @@ module.exports = class Referral {
   }
 
   async createReferralCode(referralDetails) {
-    const userNewReferralLink = `https://app.overlay.market/#/markets?ref=${referralDetails.username}`; // Hash of referralDetails.username as part of user referral code
+    const userNewReferralLink = `https://app.overlay.market/#/markets?ref=${referralDetails.username}`;
     const data = await referralProgramData.findOne({ RPD: "RPD" });
 
     // add referralDetails.username to DB for all users
@@ -108,18 +108,12 @@ module.exports = class Referral {
 
       senderAccount.referralLinks = obj;
       await this.save(senderAccount);
-    } else {
-      // If account has been created and user has one referral link means user wants to create multiple referral links
-      let obj = await this.getObject(
-        senderAccount.referralLinks,
-        referralDetails.username,
-        userNewReferralLink
-      );
-
-      senderAccount.referralLinks = obj;
-      await this.save(senderAccount);
+    } else if (
+      senderAccount != null &&
+      senderAccount.referralLinks["none"] == undefined
+    ) {
+      throw new Error("Can't create more than one referral link");
     }
-
     return userNewReferralLink;
   }
 
