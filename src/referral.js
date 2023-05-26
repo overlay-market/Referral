@@ -72,6 +72,21 @@ module.exports = class Referral {
   }
 
   async createReferralCode(referralDetails) {
+    // gets account DB of user that wants an account created
+    let senderAccount = await account.findOne({
+      user: referralDetails.sender,
+    });
+
+    if (await this.checkForUsernameInProgram(referralDetails.username))
+      throw new Error("username already exist");
+
+    if (
+      senderAccount != null &&
+      senderAccount.referralLinks["none"] == undefined
+    ) {
+      throw new Error("Can't create more than one referral link");
+    }
+
     const userNewReferralLink = `https://app.overlay.market/#/markets?ref=${referralDetails.username}`;
     const data = await referralProgramData.findOne({ RPD: "RPD" });
 
@@ -83,11 +98,6 @@ module.exports = class Referral {
 
     data.users = obj;
     await this.save(data);
-
-    // gets account DB of user that wants an account created
-    let senderAccount = await account.findOne({
-      user: referralDetails.sender,
-    });
 
     // check if account is already created
     if (senderAccount == null) {
@@ -108,11 +118,6 @@ module.exports = class Referral {
 
       senderAccount.referralLinks = obj;
       await this.save(senderAccount);
-    } else if (
-      senderAccount != null &&
-      senderAccount.referralLinks["none"] == undefined
-    ) {
-      throw new Error("Can't create more than one referral link");
     }
     return userNewReferralLink;
   }
@@ -220,7 +225,7 @@ module.exports = class Referral {
    * @dev Used to check if user name already exist or not
    * in the referral program
    */
-  async checkForUsernameInProgram(userName, sender) {
+  async checkForUsernameInProgram(userName) {
     const data = await referralProgramData.findOne({ RPD: "RPD" });
     let result = await data.users[`${userName}`];
     return result != undefined;
