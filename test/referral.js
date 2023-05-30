@@ -1,6 +1,5 @@
 const {
   read,
-  addReferral,
   impersonate,
   fork_network,
   getLiveAddress,
@@ -114,10 +113,20 @@ describe("Referral Program", async function () {
         .connect(user4)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
 
-      await referral.createReferralCode("jhjyy", user1.address);
+      const body = {
+        username: "jhjyy",
+        sender: user1.address,
+      };
+
+      const body0 = {
+        sender: user4.address,
+        referrer: user1.address,
+      };
+
+      await referral.createReferralCode(body);
 
       const hasReferralBeforeTx = await referral.hasReferrer(user4.address);
-      await addReferral(referral, user1.address, user4.address);
+      await referral.addReferrer(body0);
       const hasReferralAfterTx = await referral.hasReferrer(user4.address);
 
       expect(hasReferralBeforeTx).to.be.equal(false);
@@ -130,49 +139,65 @@ describe("Referral Program", async function () {
         .connect(user5)
         .approve(config.MARKETS["SOL/USD"], "2000000000000000000000");
 
-      const userReferralBeforeTx = await referral.getUserReferralCount(
-        user1.address
-      );
+      const userInfoBeforeTx = await referral.getUserInfo(user1.address);
 
-      await addReferral(referral, user1.address, user5.address);
+      const body = {
+        sender: user5.address,
+        referrer: user1.address,
+      };
+
+      await referral.addReferrer(body);
 
       await build(user5);
 
-      const userReferralAfterTx = await referral.getUserReferralCount(
-        user1.address
-      );
+      const userInfoAfterTx = await referral.getUserInfo(user1.address);
 
-      expect(userReferralAfterTx).to.be.above(userReferralBeforeTx);
+      expect(userInfoAfterTx.referredCount).to.be.above(
+        userInfoBeforeTx.referredCount
+      );
     });
 
     it("Should pay all uplines", async function () {
       let users = [owner, user, user2];
 
       for (let i = 0; i < users.length; i++) {
-        await addReferral(referral, referrals[i].address, users[i].address);
+        const body = {
+          sender: users[i].address,
+          referrer: referrals[i].address,
+        };
+
+        await referral.addReferrer(body);
         await build(users[i]);
       }
 
       let uplines = await referral.getUserUplines(owner.address);
-      let firstUplineBeforeBuild = await referral.getUserReferralReward(
-        uplines[0]
-      );
+      let userInfoBeforeTx = await referral.getUserInfo(uplines[0]);
 
       await build(owner);
-      let firstUplineAfterBuild = await referral.getUserReferralReward(
-        uplines[0]
-      );
+      let userInfoAfterTx = await referral.getUserInfo(uplines[0]);
 
-      expect(firstUplineAfterBuild).to.be.above(firstUplineBeforeBuild);
+      expect(userInfoAfterTx.reward).to.be.above(userInfoBeforeTx.reward);
     });
 
     it("Should fail and return already has a referral", async function () {
-      const result = await addReferral(referral, owner.address, user2.address);
-      expect(result).to.be.equal("already has a referral");
+      const body = {
+        sender: user2.address,
+        referrer: owner.address,
+      };
+
+      let error;
+
+      try {
+        await referral.addReferrer(body);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(`${error}`).to.be.equal("Error: Already has a referral");
     });
 
     it("Should update discount correctly", async function () {
-      let discountBeforeBuild = await referral.getUserDiscount(owner.address);
+      let userInfoBeforeBuild = await referral.getUserInfo(owner.address);
       await build(owner);
 
       const notional = await market.notional(
@@ -185,24 +210,24 @@ describe("Referral Program", async function () {
       const userTradingFee = (notional * riskParamTradingFee) / 1e18;
       const fee = userTradingFee * 0.2;
 
-      let discountAfterBuild = await referral.getUserDiscount(owner.address);
-      expect(discountBeforeBuild + fee).to.be.equal(discountAfterBuild);
-    });
-
-    it("Discount should remain same if users date is set to zero", async function () {
-      let discountBeforeBuild = await referral.getUserDiscount(user1.address);
-      await build(user);
-
-      let discountAfterBuild = await referral.getUserDiscount(user1.address);
-      expect(discountBeforeBuild).to.be.equal(discountAfterBuild);
+      let userInfoAfterBuild = await referral.getUserInfo(owner.address);
+      expect(userInfoBeforeBuild.discount + fee).to.be.equal(
+        userInfoAfterBuild.discount
+      );
     });
 
     it("Should change level rate", async function () {
-      let rate = await referral.getLevelRate();
-      expect(rate.length).to.be.equal(4);
-      await referral.setLevelRate([400, 350, 250]);
-      rate = await referral.getLevelRate();
-      expect(rate.length).to.be.equal(3);
+      let data = await referral.getProgramData();
+      expect(data.levelRate.length).to.be.equal(4);
+
+      const body = {
+        newRate: [40, 35, 25],
+      };
+
+      await referral.setLevelRate(body);
+
+      data = await referral.getProgramData();
+      expect(data.levelRate.length).to.be.equal(3);
     });
   });
 });

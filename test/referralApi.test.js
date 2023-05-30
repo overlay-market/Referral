@@ -49,7 +49,7 @@ describe("Referral API", () => {
     });
 
     it("it should respond with 200 success /referral/userAddressViaLink/:link", async () => {
-      await request(app).get("/referral/userAddressViaLink/cnote").expect(200);
+      await request(app).get("/referral/userAddressViaLink/users").expect(200);
     });
   });
 
