@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const accountSchema = new mongoose.Schema({
+const testAccountSchema = new mongoose.Schema({
   user: {
     type: String,
     required: true,
@@ -30,5 +30,5 @@ const accountSchema = new mongoose.Schema({
   },
 });
 
-// connect accountSchema with the "accounts" collection
-module.exports = mongoose.model("account", accountSchema);
+// connect testAccountSchema with the "testaccounts" collection
+module.exports = mongoose.model("testaccount", testAccountSchema);

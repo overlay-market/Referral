@@ -20,14 +20,18 @@ const {
   MATIC_USDmarket,
 } = require("./helper");
 
-const referral = new referralClass(
-  (decimals = 1000),
-  (referralBonus = 800),
-  (levelRate = [400, 300, 200, 100]),
-  (maxReferDepth = 4),
-  (discountDays = 2592000),
-  (discountBonus = 200)
-);
+async function deployClass() {
+  referral = new referralClass(
+    (decimals = 1000),
+    (referralBonus = 800),
+    (levelRate = [400, 300, 200, 100]),
+    (maxReferDepth = 4),
+    (discountDays = 2592000),
+    (discountBonus = 200)
+  );
+
+  return referral;
+}
 
 //Listen to OVL live markets events
 // SOL_USDmarket.on("Build", async (sender, positionId) => {
@@ -56,5 +60,6 @@ const referral = new referralClass(
 
 server.listen(8080, async function () {
   await mongoConnect();
+  await deployClass();
   console.log("Listening on http://0.0.0.0:8080");
 });
