@@ -10,6 +10,7 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@divergencetech/ethier/contracts/crypto/SignerManager.sol";
 import "@divergencetech/ethier/contracts/crypto/SignatureChecker.sol";
@@ -20,6 +21,7 @@ error Claim_Contract_Does_Not_Have_Enough_Tokens();
 
 contract Claim is ReentrancyGuard, SignerManager {
     using SignatureChecker for EnumerableSet.AddressSet;
+    using SafeERC20 for IERC20;
 
     mapping(bytes32 => bool) private usedMessages;
 
@@ -73,7 +75,7 @@ contract Claim is ReentrancyGuard, SignerManager {
 
         totalDailyClaimed += amount;
 
-        token.transfer(recipient, amount);
+        token.safeTransfer(recipient, amount);
     }
 
     function withdrawToken(
@@ -83,6 +85,6 @@ contract Claim is ReentrancyGuard, SignerManager {
         if (token.balanceOf(address(this)) < _amount)
             revert Claim_Contract_Does_Not_Have_Enough_Tokens();
 
-        token.transfer(_recipient, _amount);
+        token.safeTransfer(_recipient, _amount);
     }
 }
