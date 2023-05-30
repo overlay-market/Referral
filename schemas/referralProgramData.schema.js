@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const testReferralProgramDataSchema = new mongoose.Schema({
+const referralProgramDataSchema = new mongoose.Schema({
   RPD: {
     type: String,
     required: true,
@@ -35,8 +35,8 @@ const testReferralProgramDataSchema = new mongoose.Schema({
   },
 });
 
-// connect referralProgramData with the "testreferralprogramdatas" collection
+// connect referralProgramData with the "referralprogramdatas" collection
 module.exports = mongoose.model(
-  "testreferralProgramData",
-  testReferralProgramDataSchema
+  "referralProgramData",
+  referralProgramDataSchema
 );

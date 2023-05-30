@@ -1,5 +1,5 @@
-const account = require("../schemas/testAccount.schema");
-const referralProgramData = require("../schemas/testReferralProgramData.schema");
+const account = require("../schemas/account.schema");
+const referralProgramData = require("../schemas/referralProgramData.schema");
 
 module.exports = class Referral {
   constructor(
