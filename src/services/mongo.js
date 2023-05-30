@@ -17,8 +17,6 @@ async function mongoConnect() {
 
 async function mongoDisconnect() {
   console.log("mongoDB disconnected");
-  await mongoose.connection.db.dropCollection("testreferralprogramdatas");
-  await mongoose.connection.db.dropCollection("testaccounts");
   await mongoose.disconnect();
 }
 
