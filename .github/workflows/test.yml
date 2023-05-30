@@ -1,0 +1,24 @@
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      OPTIMISM_NODE: ${{ secrets.OPTIMISM_NODE }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: yarn
+      - run: yarn
+      - run: yarn hardhat coverage
+      - run: yarn coverage
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.json
