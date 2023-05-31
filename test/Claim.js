@@ -1,9 +1,5 @@
 require("dotenv").config();
-const { assert, expect } = require("chai");
-
-const provider = new ethers.providers.JsonRpcProvider(
-  `https://goerli.infura.io/v3/${process.env.ID}`
-);
+const { expect } = require("chai");
 
 describe("Claim", async () => {
   let Claim, claim, owner, DemoToken, demoToken, otherAccount, wallet;
@@ -206,5 +202,57 @@ describe("Claim", async () => {
     await expect(
       claim.connect(otherAccount).withdrawToken(owner.address, 10000)
     ).to.be.revertedWith("Ownable: caller is not the owner");
+  });
+
+  it("Should pause and unpause the contract", async function () {
+    expect(await claim.paused()).to.equal(false);
+  
+    await claim.pause();
+    expect(await claim.paused()).to.equal(true);
+  
+    await claim.unpause();
+    expect(await claim.paused()).to.equal(false);
+  });
+
+  it("Should not pause/unpause by not owner", async function () {
+    expect(await claim.paused()).to.equal(false);
+  
+    await expect(
+      claim.connect(otherAccount).pause()
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+
+    await claim.pause();
+    expect(await claim.paused()).to.equal(true);
+
+    await expect(
+      claim.connect(otherAccount).unpause()
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+  });
+
+  it("Should not claim while paused", async function () {
+    expect(await claim.paused()).to.equal(false);
+
+    await claim.pause();
+    expect(await claim.paused()).to.equal(true);
+
+    const amountToRedeem = dailyLimit;
+    const data = ethers.utils.defaultAbiCoder.encode(
+      ["uint256", "address"],
+      [amountToRedeem, otherAccount.address]
+    );
+
+    const nonce = ethers.utils.randomBytes(32);
+
+    const message = ethers.utils.solidityPack(
+      ["bytes", "bytes32"],
+      [data, nonce]
+    );
+
+    const signature = await wallet.signMessage(ethers.utils.arrayify(message));
+
+    // owner is calling the Tx, but the tokens are still transferred to otherAccount, like the data says
+    await expect(
+      claim.connect(owner).claimToken(nonce, data, signature)
+    ).to.be.revertedWith("Pausable: paused");
   });
 });
