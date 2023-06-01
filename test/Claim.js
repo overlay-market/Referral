@@ -144,6 +144,31 @@ describe("Claim", async () => {
     ).to.revertedWith("SignatureChecker: Invalid signature");
   });
 
+  it("Should fail to claim reward due to repeated message", async function () {
+    const amountToRedeem = dailyLimit;
+    const data = ethers.utils.defaultAbiCoder.encode(
+      ["uint256", "address"],
+      [amountToRedeem, otherAccount.address]
+    );
+
+    const nonce = ethers.utils.randomBytes(32);
+
+    const message = ethers.utils.solidityPack(
+      ["bytes", "bytes32"],
+      [data, nonce]
+    );
+
+    const signature = await wallet.signMessage(ethers.utils.arrayify(message));
+
+    await claim.connect(otherAccount).claimToken(nonce, data, signature);
+
+    expect(await demoToken.balanceOf(otherAccount.address)).to.equal(amountToRedeem)
+
+    await expect(
+      claim.connect(otherAccount).claimToken(nonce, data, signature)
+    ).to.revertedWith("SignatureChecker: Message already used");
+  });
+
   it("Should fail to claim reward due to invalid signer", async function () {
     const amountToRedeem = dailyLimit;
     const data = ethers.utils.defaultAbiCoder.encode(
