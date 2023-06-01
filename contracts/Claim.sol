@@ -12,6 +12,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@divergencetech/ethier/contracts/crypto/SignerManager.sol";
 import "@divergencetech/ethier/contracts/crypto/SignatureChecker.sol";
 
@@ -19,7 +20,7 @@ import "@divergencetech/ethier/contracts/crypto/SignatureChecker.sol";
 error Claim_Exceeded_Daily_Claiming_Limit();
 error Claim_Contract_Does_Not_Have_Enough_Tokens();
 
-contract Claim is ReentrancyGuard, SignerManager {
+contract Claim is Pausable, ReentrancyGuard, SignerManager {
     using SignatureChecker for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
@@ -37,6 +38,14 @@ contract Claim is ReentrancyGuard, SignerManager {
         maxDailyClaim = _maxDailyClaim;
     }
 
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
     function setMaxDailyClaim(uint256 _maxDailyClaim) external onlyOwner {
         maxDailyClaim = _maxDailyClaim;
     }
@@ -45,7 +54,7 @@ contract Claim is ReentrancyGuard, SignerManager {
         bytes32 _nonce,
         bytes memory _data,
         bytes calldata _signature
-    ) external nonReentrant{
+    ) external nonReentrant whenNotPaused {
         uint256 currentTimestamp = block.timestamp;
 
         // Check if 24 hours have passed since the last reset
