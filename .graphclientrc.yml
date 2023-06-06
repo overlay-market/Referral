@@ -1,0 +1,9 @@
+sources:
+  - name: overlayv2
+    handler:
+      graphql:
+        endpoint: https://api.studio.thegraph.com/query/46086/overlay-v2-subgraph-arbitrum/version/latest
+    transforms:
+      - autoPagination:
+          validateSchema: true
+          limitOfRecords: 1000
