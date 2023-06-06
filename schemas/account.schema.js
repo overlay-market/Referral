@@ -31,4 +31,4 @@ const accountSchema = new mongoose.Schema({
 });
 
 // connect accountSchema with the "accounts" collection
-module.exports = mongoose.model("account", accountSchema);
+module.exports = mongoose.model("accounts", accountSchema);
