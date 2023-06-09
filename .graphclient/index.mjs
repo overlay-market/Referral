@@ -48,7 +48,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const overlayv2Handler = new GraphqlHandler({
         name: "overlayv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/query/46086/overlay-v2-subgraph-arbitrum/version/latest" },
+        config: { "endpoint": "https://api.studio.thegraph.com/proxy/46086/overlay-subgraph-arbitrum/v2.1.12" },
         baseDir,
         cache,
         pubsub,

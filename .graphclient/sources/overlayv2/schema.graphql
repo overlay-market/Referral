@@ -69,6 +69,7 @@ type Build {
   currentDebt: BigInt!
   isLong: Boolean!
   price: BigInt!
+  feeAmount: BigInt!
   collateral: BigInt!
   value: BigInt!
   timestamp: BigInt!
@@ -154,6 +155,14 @@ input Build_filter {
   price_lte: BigInt
   price_in: [BigInt!]
   price_not_in: [BigInt!]
+  feeAmount: BigInt
+  feeAmount_not: BigInt
+  feeAmount_gt: BigInt
+  feeAmount_lt: BigInt
+  feeAmount_gte: BigInt
+  feeAmount_lte: BigInt
+  feeAmount_in: [BigInt!]
+  feeAmount_not_in: [BigInt!]
   collateral: BigInt
   collateral_not: BigInt
   collateral_gt: BigInt
@@ -231,6 +240,7 @@ enum Build_orderBy {
   currentDebt
   isLong
   price
+  feeAmount
   collateral
   value
   timestamp
@@ -339,6 +349,12 @@ enum Factory_orderBy {
   owner
   markets
 }
+
+"""
+8 bytes signed integer
+
+"""
+scalar Int8
 
 type Liquidate {
   id: ID!
@@ -1611,6 +1627,7 @@ type Unwind {
   fraction: BigInt!
   transferAmount: BigInt!
   pnl: BigInt!
+  feeAmount: BigInt!
   size: BigInt!
   mint: BigInt!
   collateral: BigInt!
@@ -1730,6 +1747,14 @@ input Unwind_filter {
   pnl_lte: BigInt
   pnl_in: [BigInt!]
   pnl_not_in: [BigInt!]
+  feeAmount: BigInt
+  feeAmount_not: BigInt
+  feeAmount_gt: BigInt
+  feeAmount_lt: BigInt
+  feeAmount_gte: BigInt
+  feeAmount_lte: BigInt
+  feeAmount_in: [BigInt!]
+  feeAmount_not_in: [BigInt!]
   size: BigInt
   size_not: BigInt
   size_gt: BigInt
@@ -1827,6 +1852,7 @@ enum Unwind_orderBy {
   fraction
   transferAmount
   pnl
+  feeAmount
   size
   mint
   collateral

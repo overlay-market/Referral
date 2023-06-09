@@ -30,6 +30,7 @@ export type Scalars = {
     BigDecimal: any;
     BigInt: any;
     Bytes: any;
+    Int8: any;
 };
 export type Account = {
     id: Scalars['ID'];
@@ -101,6 +102,7 @@ export type Build = {
     currentDebt: Scalars['BigInt'];
     isLong: Scalars['Boolean'];
     price: Scalars['BigInt'];
+    feeAmount: Scalars['BigInt'];
     collateral: Scalars['BigInt'];
     value: Scalars['BigInt'];
     timestamp: Scalars['BigInt'];
@@ -185,6 +187,14 @@ export type Build_filter = {
     price_lte?: InputMaybe<Scalars['BigInt']>;
     price_in?: InputMaybe<Array<Scalars['BigInt']>>;
     price_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    feeAmount?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_not?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_gt?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_lt?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_gte?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_lte?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    feeAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     collateral?: InputMaybe<Scalars['BigInt']>;
     collateral_not?: InputMaybe<Scalars['BigInt']>;
     collateral_gt?: InputMaybe<Scalars['BigInt']>;
@@ -235,7 +245,7 @@ export type Build_filter = {
     and?: InputMaybe<Array<InputMaybe<Build_filter>>>;
     or?: InputMaybe<Array<InputMaybe<Build_filter>>>;
 };
-export type Build_orderBy = 'id' | 'owner' | 'owner__id' | 'position' | 'position__id' | 'position__positionId' | 'position__initialOi' | 'position__initialDebt' | 'position__initialCollateral' | 'position__initialNotional' | 'position__leverage' | 'position__fractionUnwound' | 'position__isLong' | 'position__entryPrice' | 'position__isLiquidated' | 'position__currentOi' | 'position__currentDebt' | 'position__mint' | 'position__createdAtTimestamp' | 'position__createdAtBlockNumber' | 'position__numberOfUniwnds' | 'currentOi' | 'currentDebt' | 'isLong' | 'price' | 'collateral' | 'value' | 'timestamp' | 'transaction' | 'transaction__id' | 'transaction__blockNumber' | 'transaction__timestamp' | 'transaction__gasLimit' | 'transaction__gasPrice';
+export type Build_orderBy = 'id' | 'owner' | 'owner__id' | 'position' | 'position__id' | 'position__positionId' | 'position__initialOi' | 'position__initialDebt' | 'position__initialCollateral' | 'position__initialNotional' | 'position__leverage' | 'position__fractionUnwound' | 'position__isLong' | 'position__entryPrice' | 'position__isLiquidated' | 'position__currentOi' | 'position__currentDebt' | 'position__mint' | 'position__createdAtTimestamp' | 'position__createdAtBlockNumber' | 'position__numberOfUniwnds' | 'currentOi' | 'currentDebt' | 'isLong' | 'price' | 'feeAmount' | 'collateral' | 'value' | 'timestamp' | 'transaction' | 'transaction__id' | 'transaction__blockNumber' | 'transaction__timestamp' | 'transaction__gasLimit' | 'transaction__gasPrice';
 export type Factory = {
     id: Scalars['ID'];
     marketCount: Scalars['BigInt'];
@@ -1348,6 +1358,7 @@ export type Unwind = {
     fraction: Scalars['BigInt'];
     transferAmount: Scalars['BigInt'];
     pnl: Scalars['BigInt'];
+    feeAmount: Scalars['BigInt'];
     size: Scalars['BigInt'];
     mint: Scalars['BigInt'];
     collateral: Scalars['BigInt'];
@@ -1466,6 +1477,14 @@ export type Unwind_filter = {
     pnl_lte?: InputMaybe<Scalars['BigInt']>;
     pnl_in?: InputMaybe<Array<Scalars['BigInt']>>;
     pnl_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    feeAmount?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_not?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_gt?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_lt?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_gte?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_lte?: InputMaybe<Scalars['BigInt']>;
+    feeAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    feeAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     size?: InputMaybe<Scalars['BigInt']>;
     size_not?: InputMaybe<Scalars['BigInt']>;
     size_gt?: InputMaybe<Scalars['BigInt']>;
@@ -1532,7 +1551,7 @@ export type Unwind_filter = {
     and?: InputMaybe<Array<InputMaybe<Unwind_filter>>>;
     or?: InputMaybe<Array<InputMaybe<Unwind_filter>>>;
 };
-export type Unwind_orderBy = 'id' | 'owner' | 'owner__id' | 'position' | 'position__id' | 'position__positionId' | 'position__initialOi' | 'position__initialDebt' | 'position__initialCollateral' | 'position__initialNotional' | 'position__leverage' | 'position__fractionUnwound' | 'position__isLong' | 'position__entryPrice' | 'position__isLiquidated' | 'position__currentOi' | 'position__currentDebt' | 'position__mint' | 'position__createdAtTimestamp' | 'position__createdAtBlockNumber' | 'position__numberOfUniwnds' | 'unwindNumber' | 'currentOi' | 'currentDebt' | 'isLong' | 'price' | 'fraction' | 'transferAmount' | 'pnl' | 'size' | 'mint' | 'collateral' | 'value' | 'timestamp' | 'transaction' | 'transaction__id' | 'transaction__blockNumber' | 'transaction__timestamp' | 'transaction__gasLimit' | 'transaction__gasPrice';
+export type Unwind_orderBy = 'id' | 'owner' | 'owner__id' | 'position' | 'position__id' | 'position__positionId' | 'position__initialOi' | 'position__initialDebt' | 'position__initialCollateral' | 'position__initialNotional' | 'position__leverage' | 'position__fractionUnwound' | 'position__isLong' | 'position__entryPrice' | 'position__isLiquidated' | 'position__currentOi' | 'position__currentDebt' | 'position__mint' | 'position__createdAtTimestamp' | 'position__createdAtBlockNumber' | 'position__numberOfUniwnds' | 'unwindNumber' | 'currentOi' | 'currentDebt' | 'isLong' | 'price' | 'fraction' | 'transferAmount' | 'pnl' | 'feeAmount' | 'size' | 'mint' | 'collateral' | 'value' | 'timestamp' | 'transaction' | 'transaction__id' | 'transaction__blockNumber' | 'transaction__timestamp' | 'transaction__gasLimit' | 'transaction__gasPrice';
 export type _Block_ = {
     /** The hash of the block */
     hash?: Maybe<Scalars['Bytes']>;
@@ -1618,6 +1637,7 @@ export type ResolversTypes = ResolversObject<{
     Float: ResolverTypeWrapper<Scalars['Float']>;
     ID: ResolverTypeWrapper<Scalars['ID']>;
     Int: ResolverTypeWrapper<Scalars['Int']>;
+    Int8: ResolverTypeWrapper<Scalars['Int8']>;
     Liquidate: ResolverTypeWrapper<Liquidate>;
     Liquidate_filter: Liquidate_filter;
     Liquidate_orderBy: Liquidate_orderBy;
@@ -1658,6 +1678,7 @@ export type ResolversParentTypes = ResolversObject<{
     Float: Scalars['Float'];
     ID: Scalars['ID'];
     Int: Scalars['Int'];
+    Int8: Scalars['Int8'];
     Liquidate: Liquidate;
     Liquidate_filter: Liquidate_filter;
     Market: Market;
@@ -1706,6 +1727,7 @@ export type BuildResolvers<ContextType = MeshContext, ParentType extends Resolve
     currentDebt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     isLong?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     price?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    feeAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     collateral?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     value?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     timestamp?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
@@ -1727,6 +1749,9 @@ export type FactoryResolvers<ContextType = MeshContext, ParentType extends Resol
     markets?: Resolver<Array<ResolversTypes['Market']>, ParentType, ContextType, RequireFields<FactorymarketsArgs, 'skip' | 'first'>>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
+export interface Int8ScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Int8'], any> {
+    name: 'Int8';
+}
 export type LiquidateResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Liquidate'] = ResolversParentTypes['Liquidate']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     owner?: Resolver<ResolversTypes['Account'], ParentType, ContextType>;
@@ -1856,6 +1881,7 @@ export type UnwindResolvers<ContextType = MeshContext, ParentType extends Resolv
     fraction?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     transferAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     pnl?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    feeAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     size?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     mint?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     collateral?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
@@ -1883,6 +1909,7 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     Build?: BuildResolvers<ContextType>;
     Bytes?: GraphQLScalarType;
     Factory?: FactoryResolvers<ContextType>;
+    Int8?: GraphQLScalarType;
     Liquidate?: LiquidateResolvers<ContextType>;
     Market?: MarketResolvers<ContextType>;
     Position?: PositionResolvers<ContextType>;

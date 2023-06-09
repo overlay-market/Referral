@@ -19,6 +19,7 @@ export type Scalars = {
   BigDecimal: any;
   BigInt: any;
   Bytes: any;
+  Int8: any;
 };
 
 export type Account = {
@@ -109,6 +110,7 @@ export type Build = {
   currentDebt: Scalars['BigInt'];
   isLong: Scalars['Boolean'];
   price: Scalars['BigInt'];
+  feeAmount: Scalars['BigInt'];
   collateral: Scalars['BigInt'];
   value: Scalars['BigInt'];
   timestamp: Scalars['BigInt'];
@@ -194,6 +196,14 @@ export type Build_filter = {
   price_lte?: InputMaybe<Scalars['BigInt']>;
   price_in?: InputMaybe<Array<Scalars['BigInt']>>;
   price_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  feeAmount?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_not?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_gt?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_lt?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_gte?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_lte?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  feeAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   collateral?: InputMaybe<Scalars['BigInt']>;
   collateral_not?: InputMaybe<Scalars['BigInt']>;
   collateral_gt?: InputMaybe<Scalars['BigInt']>;
@@ -271,6 +281,7 @@ export type Build_orderBy =
   | 'currentDebt'
   | 'isLong'
   | 'price'
+  | 'feeAmount'
   | 'collateral'
   | 'value'
   | 'timestamp'
@@ -1628,6 +1639,7 @@ export type Unwind = {
   fraction: Scalars['BigInt'];
   transferAmount: Scalars['BigInt'];
   pnl: Scalars['BigInt'];
+  feeAmount: Scalars['BigInt'];
   size: Scalars['BigInt'];
   mint: Scalars['BigInt'];
   collateral: Scalars['BigInt'];
@@ -1747,6 +1759,14 @@ export type Unwind_filter = {
   pnl_lte?: InputMaybe<Scalars['BigInt']>;
   pnl_in?: InputMaybe<Array<Scalars['BigInt']>>;
   pnl_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  feeAmount?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_not?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_gt?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_lt?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_gte?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_lte?: InputMaybe<Scalars['BigInt']>;
+  feeAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  feeAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   size?: InputMaybe<Scalars['BigInt']>;
   size_not?: InputMaybe<Scalars['BigInt']>;
   size_gt?: InputMaybe<Scalars['BigInt']>;
@@ -1844,6 +1864,7 @@ export type Unwind_orderBy =
   | 'fraction'
   | 'transferAmount'
   | 'pnl'
+  | 'feeAmount'
   | 'size'
   | 'mint'
   | 'collateral'
