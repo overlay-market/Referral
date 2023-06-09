@@ -1,5 +1,10 @@
 const mongoose = require("mongoose");
 
+const usersSchema = new mongoose.Schema({
+  referralLink: String,
+  address: String,
+})
+
 const referralProgramDataSchema = new mongoose.Schema({
   RPD: {
     type: String,
@@ -30,8 +35,13 @@ const referralProgramDataSchema = new mongoose.Schema({
     required: true,
   },
   users: {
-    type: Object,
+    type: Map,
+    of: usersSchema,
     required: true,
+  },
+  lastUpdate: {
+    build: Number,
+    unwind: Number,
   },
 });
 

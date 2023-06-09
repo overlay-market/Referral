@@ -75,27 +75,7 @@ function getReferral() {
   return referral
 }
 
-/**
- * @dev Reads event from Build(),
- * Calculates the tradingFee and calls referral class.
- */
-async function read(sender, id, stateContract, marketContract) {
-  const referral = getReferral();
-  if (await referral.hasReferrer(sender)) {
-    const notional = await stateContract.notional(
-      marketContract.address,
-      sender,
-      id
-    );
-    const riskParamTradingFee = await marketContract.params(11);
-
-    const userTradingFee = notional * riskParamTradingFee;
-    await referral.updateReferral(userTradingFee / 1e18, sender);
-  } else return "user has no referral";
-}
-
 module.exports = {
-  read,
   impersonate,
   fork_network,
   SOL_USDmarket,

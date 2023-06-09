@@ -4,6 +4,8 @@ const accountSchema = new mongoose.Schema({
   user: {
     type: String,
     required: true,
+    index: true,
+    unique: true,
   },
   referrer: {
     type: String,
@@ -13,11 +15,11 @@ const accountSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  date: {
+  discount: {
     type: Number,
     required: true,
   },
-  discount: {
+  date: {
     type: Number,
     required: true,
   },
