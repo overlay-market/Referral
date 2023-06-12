@@ -159,16 +159,21 @@ module.exports = class Referral {
 
   /**
    * @dev This will calc and update rewards to uplines instantly
+   * @param {Number} value - The total fee payed by the user
+   * @param {String} sender - The sender of the transaction
+   * @param {Number} txTimestamp - The timestamp of the transaction
    */
   async updateReferral(value, sender, txTimestamp) {
+    // Find the user's account and referral program data
     let userAccount = await account.findOne({ user: sender.toLowerCase() });
     let data = this.programData;
 
+    // If the user account doesn't exist or the account creation date  is after the transaction timestamp, return 0
     if (!userAccount || userAccount.date > txTimestamp ) {
       return 0
     }
-    console.log("found Tx", userAccount.date, txTimestamp, {value, sender})
 
+    // Loop through each levelRate to calculate and distribute rewards to uplines
     for (let i = 0; i < data.levelRate.length; i++) {
       // gets the next upline of user that built a position and pays them i.e;
       // userThatBuiltPosition ---> referrer --- 1stDirectUpline
@@ -177,6 +182,7 @@ module.exports = class Referral {
       let parent = userAccount.referrer;
       let parentAccount = await account.findOne({ user: userAccount.referrer });
 
+      // If there is no parent (referrer), break the loop
       if (parent == "") {
         break;
       }
@@ -185,19 +191,26 @@ module.exports = class Referral {
       let c = (value * data.referralBonus) / data.decimal;
       c = (c * data.levelRate[i]) / data.decimal;
 
+      // update parentAccount with the reward
       parentAccount.reward += c;
+      // update totalRewards with the reward
       data.totalRewardsAvailableForClaim += c;
 
       await this.save(parentAccount);
 
+      // update userAccount as parentAccount to get next upline parent in the loop
       userAccount = parentAccount;
     }
 
     let user = await account.findOne({ user: sender.toLowerCase() });
     // gets discount as a new user for the duration of discountDays
     if (user.date + data.discountDays > txTimestamp) {
+      // calculates the portion of fees to discount
       let discount = (value * data.discountBonus) / data.decimal;
+
+      // update user with the discount
       user.discount += discount;
+      // update totalRewards with the discount
       data.totalRewardsAvailableForClaim += discount
       await this.save(user);
     }
