@@ -635,6 +635,13 @@ export type Market = {
   oiShort: Scalars['BigInt'];
   positions: Array<Position>;
   isShutdown: Scalars['Boolean'];
+  numberOfBuilds: Scalars['BigInt'];
+  totalBuildFees: Scalars['BigInt'];
+  numberOfUnwinds: Scalars['BigInt'];
+  totalUnwindFees: Scalars['BigInt'];
+  numberOfLiquidates: Scalars['BigInt'];
+  totalLiquidateFees: Scalars['BigInt'];
+  totalFees: Scalars['BigInt'];
 };
 
 
@@ -853,6 +860,62 @@ export type Market_filter = {
   isShutdown_not?: InputMaybe<Scalars['Boolean']>;
   isShutdown_in?: InputMaybe<Array<Scalars['Boolean']>>;
   isShutdown_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  numberOfBuilds?: InputMaybe<Scalars['BigInt']>;
+  numberOfBuilds_not?: InputMaybe<Scalars['BigInt']>;
+  numberOfBuilds_gt?: InputMaybe<Scalars['BigInt']>;
+  numberOfBuilds_lt?: InputMaybe<Scalars['BigInt']>;
+  numberOfBuilds_gte?: InputMaybe<Scalars['BigInt']>;
+  numberOfBuilds_lte?: InputMaybe<Scalars['BigInt']>;
+  numberOfBuilds_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  numberOfBuilds_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalBuildFees?: InputMaybe<Scalars['BigInt']>;
+  totalBuildFees_not?: InputMaybe<Scalars['BigInt']>;
+  totalBuildFees_gt?: InputMaybe<Scalars['BigInt']>;
+  totalBuildFees_lt?: InputMaybe<Scalars['BigInt']>;
+  totalBuildFees_gte?: InputMaybe<Scalars['BigInt']>;
+  totalBuildFees_lte?: InputMaybe<Scalars['BigInt']>;
+  totalBuildFees_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalBuildFees_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  numberOfUnwinds?: InputMaybe<Scalars['BigInt']>;
+  numberOfUnwinds_not?: InputMaybe<Scalars['BigInt']>;
+  numberOfUnwinds_gt?: InputMaybe<Scalars['BigInt']>;
+  numberOfUnwinds_lt?: InputMaybe<Scalars['BigInt']>;
+  numberOfUnwinds_gte?: InputMaybe<Scalars['BigInt']>;
+  numberOfUnwinds_lte?: InputMaybe<Scalars['BigInt']>;
+  numberOfUnwinds_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  numberOfUnwinds_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalUnwindFees?: InputMaybe<Scalars['BigInt']>;
+  totalUnwindFees_not?: InputMaybe<Scalars['BigInt']>;
+  totalUnwindFees_gt?: InputMaybe<Scalars['BigInt']>;
+  totalUnwindFees_lt?: InputMaybe<Scalars['BigInt']>;
+  totalUnwindFees_gte?: InputMaybe<Scalars['BigInt']>;
+  totalUnwindFees_lte?: InputMaybe<Scalars['BigInt']>;
+  totalUnwindFees_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalUnwindFees_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  numberOfLiquidates?: InputMaybe<Scalars['BigInt']>;
+  numberOfLiquidates_not?: InputMaybe<Scalars['BigInt']>;
+  numberOfLiquidates_gt?: InputMaybe<Scalars['BigInt']>;
+  numberOfLiquidates_lt?: InputMaybe<Scalars['BigInt']>;
+  numberOfLiquidates_gte?: InputMaybe<Scalars['BigInt']>;
+  numberOfLiquidates_lte?: InputMaybe<Scalars['BigInt']>;
+  numberOfLiquidates_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  numberOfLiquidates_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalLiquidateFees?: InputMaybe<Scalars['BigInt']>;
+  totalLiquidateFees_not?: InputMaybe<Scalars['BigInt']>;
+  totalLiquidateFees_gt?: InputMaybe<Scalars['BigInt']>;
+  totalLiquidateFees_lt?: InputMaybe<Scalars['BigInt']>;
+  totalLiquidateFees_gte?: InputMaybe<Scalars['BigInt']>;
+  totalLiquidateFees_lte?: InputMaybe<Scalars['BigInt']>;
+  totalLiquidateFees_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalLiquidateFees_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalFees?: InputMaybe<Scalars['BigInt']>;
+  totalFees_not?: InputMaybe<Scalars['BigInt']>;
+  totalFees_gt?: InputMaybe<Scalars['BigInt']>;
+  totalFees_lt?: InputMaybe<Scalars['BigInt']>;
+  totalFees_gte?: InputMaybe<Scalars['BigInt']>;
+  totalFees_lte?: InputMaybe<Scalars['BigInt']>;
+  totalFees_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalFees_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<Market_filter>>>;
@@ -891,7 +954,14 @@ export type Market_orderBy =
   | 'oiLong'
   | 'oiShort'
   | 'positions'
-  | 'isShutdown';
+  | 'isShutdown'
+  | 'numberOfBuilds'
+  | 'totalBuildFees'
+  | 'numberOfUnwinds'
+  | 'totalUnwindFees'
+  | 'numberOfLiquidates'
+  | 'totalLiquidateFees'
+  | 'totalFees';
 
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection =
@@ -1170,6 +1240,13 @@ export type Position_orderBy =
   | 'market__oiLong'
   | 'market__oiShort'
   | 'market__isShutdown'
+  | 'market__numberOfBuilds'
+  | 'market__totalBuildFees'
+  | 'market__numberOfUnwinds'
+  | 'market__totalUnwindFees'
+  | 'market__numberOfLiquidates'
+  | 'market__totalLiquidateFees'
+  | 'market__totalFees'
   | 'initialOi'
   | 'initialDebt'
   | 'initialCollateral'

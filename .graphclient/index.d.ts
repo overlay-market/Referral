@@ -535,6 +535,13 @@ export type Market = {
     oiShort: Scalars['BigInt'];
     positions: Array<Position>;
     isShutdown: Scalars['Boolean'];
+    numberOfBuilds: Scalars['BigInt'];
+    totalBuildFees: Scalars['BigInt'];
+    numberOfUnwinds: Scalars['BigInt'];
+    totalUnwindFees: Scalars['BigInt'];
+    numberOfLiquidates: Scalars['BigInt'];
+    totalLiquidateFees: Scalars['BigInt'];
+    totalFees: Scalars['BigInt'];
 };
 export type MarketpositionsArgs = {
     skip?: InputMaybe<Scalars['Int']>;
@@ -750,12 +757,68 @@ export type Market_filter = {
     isShutdown_not?: InputMaybe<Scalars['Boolean']>;
     isShutdown_in?: InputMaybe<Array<Scalars['Boolean']>>;
     isShutdown_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+    numberOfBuilds?: InputMaybe<Scalars['BigInt']>;
+    numberOfBuilds_not?: InputMaybe<Scalars['BigInt']>;
+    numberOfBuilds_gt?: InputMaybe<Scalars['BigInt']>;
+    numberOfBuilds_lt?: InputMaybe<Scalars['BigInt']>;
+    numberOfBuilds_gte?: InputMaybe<Scalars['BigInt']>;
+    numberOfBuilds_lte?: InputMaybe<Scalars['BigInt']>;
+    numberOfBuilds_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    numberOfBuilds_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalBuildFees?: InputMaybe<Scalars['BigInt']>;
+    totalBuildFees_not?: InputMaybe<Scalars['BigInt']>;
+    totalBuildFees_gt?: InputMaybe<Scalars['BigInt']>;
+    totalBuildFees_lt?: InputMaybe<Scalars['BigInt']>;
+    totalBuildFees_gte?: InputMaybe<Scalars['BigInt']>;
+    totalBuildFees_lte?: InputMaybe<Scalars['BigInt']>;
+    totalBuildFees_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalBuildFees_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    numberOfUnwinds?: InputMaybe<Scalars['BigInt']>;
+    numberOfUnwinds_not?: InputMaybe<Scalars['BigInt']>;
+    numberOfUnwinds_gt?: InputMaybe<Scalars['BigInt']>;
+    numberOfUnwinds_lt?: InputMaybe<Scalars['BigInt']>;
+    numberOfUnwinds_gte?: InputMaybe<Scalars['BigInt']>;
+    numberOfUnwinds_lte?: InputMaybe<Scalars['BigInt']>;
+    numberOfUnwinds_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    numberOfUnwinds_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalUnwindFees?: InputMaybe<Scalars['BigInt']>;
+    totalUnwindFees_not?: InputMaybe<Scalars['BigInt']>;
+    totalUnwindFees_gt?: InputMaybe<Scalars['BigInt']>;
+    totalUnwindFees_lt?: InputMaybe<Scalars['BigInt']>;
+    totalUnwindFees_gte?: InputMaybe<Scalars['BigInt']>;
+    totalUnwindFees_lte?: InputMaybe<Scalars['BigInt']>;
+    totalUnwindFees_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalUnwindFees_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    numberOfLiquidates?: InputMaybe<Scalars['BigInt']>;
+    numberOfLiquidates_not?: InputMaybe<Scalars['BigInt']>;
+    numberOfLiquidates_gt?: InputMaybe<Scalars['BigInt']>;
+    numberOfLiquidates_lt?: InputMaybe<Scalars['BigInt']>;
+    numberOfLiquidates_gte?: InputMaybe<Scalars['BigInt']>;
+    numberOfLiquidates_lte?: InputMaybe<Scalars['BigInt']>;
+    numberOfLiquidates_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    numberOfLiquidates_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalLiquidateFees?: InputMaybe<Scalars['BigInt']>;
+    totalLiquidateFees_not?: InputMaybe<Scalars['BigInt']>;
+    totalLiquidateFees_gt?: InputMaybe<Scalars['BigInt']>;
+    totalLiquidateFees_lt?: InputMaybe<Scalars['BigInt']>;
+    totalLiquidateFees_gte?: InputMaybe<Scalars['BigInt']>;
+    totalLiquidateFees_lte?: InputMaybe<Scalars['BigInt']>;
+    totalLiquidateFees_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalLiquidateFees_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalFees?: InputMaybe<Scalars['BigInt']>;
+    totalFees_not?: InputMaybe<Scalars['BigInt']>;
+    totalFees_gt?: InputMaybe<Scalars['BigInt']>;
+    totalFees_lt?: InputMaybe<Scalars['BigInt']>;
+    totalFees_gte?: InputMaybe<Scalars['BigInt']>;
+    totalFees_lte?: InputMaybe<Scalars['BigInt']>;
+    totalFees_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalFees_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<Market_filter>>>;
     or?: InputMaybe<Array<InputMaybe<Market_filter>>>;
 };
-export type Market_orderBy = 'id' | 'feedAddress' | 'factory' | 'factory__id' | 'factory__marketCount' | 'factory__txCount' | 'factory__totalVolumeOVL' | 'factory__totalFeesOVL' | 'factory__totalValueLockedOVL' | 'factory__feeRecipient' | 'factory__owner' | 'createdAtTimestamp' | 'createdAtBlockNumber' | 'k' | 'lmbda' | 'delta' | 'capPayoff' | 'capNotional' | 'capLeverage' | 'circuitBreakerWindow' | 'circuitBreakerMintTarget' | 'maintenanceMarginFraction' | 'maintenanceMarginBurnRate' | 'liquidationFeeRate' | 'tradingFeeRate' | 'minCollateral' | 'priceDriftUpperLimit' | 'averageBlockTime' | 'oiLong' | 'oiShort' | 'positions' | 'isShutdown';
+export type Market_orderBy = 'id' | 'feedAddress' | 'factory' | 'factory__id' | 'factory__marketCount' | 'factory__txCount' | 'factory__totalVolumeOVL' | 'factory__totalFeesOVL' | 'factory__totalValueLockedOVL' | 'factory__feeRecipient' | 'factory__owner' | 'createdAtTimestamp' | 'createdAtBlockNumber' | 'k' | 'lmbda' | 'delta' | 'capPayoff' | 'capNotional' | 'capLeverage' | 'circuitBreakerWindow' | 'circuitBreakerMintTarget' | 'maintenanceMarginFraction' | 'maintenanceMarginBurnRate' | 'liquidationFeeRate' | 'tradingFeeRate' | 'minCollateral' | 'priceDriftUpperLimit' | 'averageBlockTime' | 'oiLong' | 'oiShort' | 'positions' | 'isShutdown' | 'numberOfBuilds' | 'totalBuildFees' | 'numberOfUnwinds' | 'totalUnwindFees' | 'numberOfLiquidates' | 'totalLiquidateFees' | 'totalFees';
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection = 'asc' | 'desc';
 export type Position = {
@@ -994,7 +1057,7 @@ export type Position_filter = {
     and?: InputMaybe<Array<InputMaybe<Position_filter>>>;
     or?: InputMaybe<Array<InputMaybe<Position_filter>>>;
 };
-export type Position_orderBy = 'id' | 'positionId' | 'owner' | 'owner__id' | 'market' | 'market__id' | 'market__feedAddress' | 'market__createdAtTimestamp' | 'market__createdAtBlockNumber' | 'market__k' | 'market__lmbda' | 'market__delta' | 'market__capPayoff' | 'market__capNotional' | 'market__capLeverage' | 'market__circuitBreakerWindow' | 'market__circuitBreakerMintTarget' | 'market__maintenanceMarginFraction' | 'market__maintenanceMarginBurnRate' | 'market__liquidationFeeRate' | 'market__tradingFeeRate' | 'market__minCollateral' | 'market__priceDriftUpperLimit' | 'market__averageBlockTime' | 'market__oiLong' | 'market__oiShort' | 'market__isShutdown' | 'initialOi' | 'initialDebt' | 'initialCollateral' | 'initialNotional' | 'leverage' | 'fractionUnwound' | 'isLong' | 'entryPrice' | 'isLiquidated' | 'currentOi' | 'currentDebt' | 'mint' | 'createdAtTimestamp' | 'createdAtBlockNumber' | 'numberOfUniwnds' | 'builds' | 'liquidates' | 'unwinds';
+export type Position_orderBy = 'id' | 'positionId' | 'owner' | 'owner__id' | 'market' | 'market__id' | 'market__feedAddress' | 'market__createdAtTimestamp' | 'market__createdAtBlockNumber' | 'market__k' | 'market__lmbda' | 'market__delta' | 'market__capPayoff' | 'market__capNotional' | 'market__capLeverage' | 'market__circuitBreakerWindow' | 'market__circuitBreakerMintTarget' | 'market__maintenanceMarginFraction' | 'market__maintenanceMarginBurnRate' | 'market__liquidationFeeRate' | 'market__tradingFeeRate' | 'market__minCollateral' | 'market__priceDriftUpperLimit' | 'market__averageBlockTime' | 'market__oiLong' | 'market__oiShort' | 'market__isShutdown' | 'market__numberOfBuilds' | 'market__totalBuildFees' | 'market__numberOfUnwinds' | 'market__totalUnwindFees' | 'market__numberOfLiquidates' | 'market__totalLiquidateFees' | 'market__totalFees' | 'initialOi' | 'initialDebt' | 'initialCollateral' | 'initialNotional' | 'leverage' | 'fractionUnwound' | 'isLong' | 'entryPrice' | 'isLiquidated' | 'currentOi' | 'currentDebt' | 'mint' | 'createdAtTimestamp' | 'createdAtBlockNumber' | 'numberOfUniwnds' | 'builds' | 'liquidates' | 'unwinds';
 export type Query = {
     factory?: Maybe<Factory>;
     factories: Array<Factory>;
@@ -1793,6 +1856,13 @@ export type MarketResolvers<ContextType = MeshContext, ParentType extends Resolv
     oiShort?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     positions?: Resolver<Array<ResolversTypes['Position']>, ParentType, ContextType, RequireFields<MarketpositionsArgs, 'skip' | 'first'>>;
     isShutdown?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+    numberOfBuilds?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    totalBuildFees?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    numberOfUnwinds?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    totalUnwindFees?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    numberOfLiquidates?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    totalLiquidateFees?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    totalFees?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type PositionResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Position'] = ResolversParentTypes['Position']> = ResolversObject<{

@@ -51,7 +51,7 @@ async function getMeshOptions() {
     const additionalTypeDefs = [];
     const overlayv2Handler = new graphql_1.default({
         name: "overlayv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/proxy/46086/overlay-subgraph-arbitrum/v2.1.12" },
+        config: { "endpoint": "https://api.studio.thegraph.com/proxy/46086/overlay-subgraph-arbitrum/v2.1.13" },
         baseDir,
         cache,
         pubsub,

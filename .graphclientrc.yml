@@ -2,7 +2,7 @@ sources:
   - name: overlayv2
     handler:
       graphql:
-        endpoint: https://api.studio.thegraph.com/proxy/46086/overlay-subgraph-arbitrum/v2.1.12
+        endpoint: https://api.studio.thegraph.com/proxy/46086/overlay-subgraph-arbitrum/v2.1.13
     transforms:
       - autoPagination:
           validateSchema: true
