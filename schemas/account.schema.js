@@ -19,6 +19,10 @@ const accountSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  redeemed: {
+    type: Number,
+    required: true,
+  },
   date: {
     type: Number,
     required: true,
@@ -28,7 +32,7 @@ const accountSchema = new mongoose.Schema({
     required: true,
   },
   referralLinks: {
-    type: Object,
+    type: [String],
   },
 });
 

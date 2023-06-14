@@ -87,8 +87,9 @@ module.exports = class Referral {
     if (
       senderAccount != null &&
       senderAccount.referralLinks !== undefined &&
-      Object.keys(senderAccount.referralLinks).length !== 0
+      senderAccount.referralLinks.length > 0
     ) {
+      console.log(senderAccount.referralLinks)
       throw new Error("Can't create more than one referral link");
     }
 
@@ -100,25 +101,15 @@ module.exports = class Referral {
 
     // check if account is already created
     if (senderAccount == null) {
-      let userNewReferral = {};
-      userNewReferral[referralDetails.username.toLowerCase()] = userNewReferralLink;
 
       await this.createAccount(
         referralDetails.sender.toLowerCase(),
         "",
         this.getDateInSeconds(),
-        userNewReferral
+        referralDetails.username.toLowerCase()
       );
     } else {
-      console.log("creating object")
-      // if not create one
-      let obj = await this.getObject(
-        {},
-        referralDetails.username.toLowerCase(),
-        userNewReferralLink
-      );
-      console.log({obj})
-      senderAccount.referralLinks = obj;
+      senderAccount.referralLinks.push(referralDetails.username.toLowerCase())
       await this.save(senderAccount);
     }
     return userNewReferralLink;
@@ -261,12 +252,15 @@ module.exports = class Referral {
     if (!result) throw new Error("user does not exist");
     let userAccount = await account.findOne({ user: result.address });
 
-    let newObj1 = { ...userAccount.referralLinks };
+    const indexToDelete = userAccount.referralLinks.indexOf(userName)
 
-    delete newObj1[`${userName.toLowerCase()}`];
+    // Check if the item exists in the array
+    if (indexToDelete > -1) {
+      // Use splice() to remove the item at the found index
+      userAccount.referralLinks.splice(indexToDelete, 1);
+    }
 
     data.users.delete(`${userName.toLowerCase()}`)
-    userAccount.referralLinks = newObj1;
 
     await this.save(data);
     await this.save(userAccount);
@@ -368,7 +362,7 @@ module.exports = class Referral {
   /**
    * @dev Creates new DB for account collection.
    */
-  async createAccount(sender, referrer, date, referralLink = {}) {
+  async createAccount(sender, referrer, date, referralLink = null) {
     try {
       await account.create({
         user: sender,
@@ -376,8 +370,9 @@ module.exports = class Referral {
         reward: 0,
         date: date,
         discount: 0,
+        redeemed: 0,
         referredCount: 0,
-        referralLinks: { $set: referralLink },
+        referralLinks: [referralLink],
       });
     } catch (error) {
       throw new Error(`Error creating account in collection: ` + error.message);
