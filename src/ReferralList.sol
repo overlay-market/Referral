@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {OwnableRoles} from "solady/src/auth/OwnableRoles.sol";
-import {Initializable} from "@OpenZeppelin/upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@OpenZeppelin/upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-contract ReferralList is OwnableRoles {
+contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable {
     error ReferredAlreadyExists();
     error ReferrerNotAllowed();
 
@@ -13,8 +13,14 @@ contract ReferralList is OwnableRoles {
     mapping(address referrer => bool isAllowed) public allowedReferrers;
 
     constructor() {
+        _disableInitializers();
+    }
+
+    function initialize() public initializer {
         _initializeOwner(msg.sender);
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function addReferrer(address _referrer) public {
         if (allowedReferrers[_referrer]) revert ReferrerNotAllowed();
