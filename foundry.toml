@@ -2,5 +2,8 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+# Using "paris" EVM version for Arbitrum
+#https://docs.arbitrum.io/for-devs/concepts/differences-between-arbitrum-ethereum/solidity-support
+evm_version = "paris"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
