@@ -9,6 +9,8 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable {
     error ReferredAlreadyExists();
     error ReferrerNotAllowed();
 
+    uint256 public constant ROLE_AIRDROPPER = uint256(keccak256("ROLE_AIRDROPPER"));
+
     mapping(address referred => address referrer) public referrals;
     mapping(address referrer => bool isAllowed) public allowedReferrers;
 
@@ -16,8 +18,9 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize(address _airdropper) public initializer {
         _initializeOwner(msg.sender);
+        grantRoles(_airdropper, ROLE_AIRDROPPER);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -37,7 +40,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable {
         address[] calldata _addresses,
         uint256[] calldata _amounts,
         uint256 _totalAmount
-    ) external payable {
+    ) external payable onlyRoles(ROLE_AIRDROPPER) {
         assembly {
             // Check that the number of addresses matches the number of amounts
             if iszero(eq(_amounts.length, _addresses.length)) { revert(0, 0) }
