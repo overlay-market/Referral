@@ -15,7 +15,7 @@ contract ReferralList is Ownable {
     }
 
     function addReferrer(address _referrer) public {
-        if (referrals[_referrer] != address(0)) revert ReferredAlreadyExists();
+        if (allowedReferrers[_referrer]) revert ReferrerNotAllowed();
         referrals[msg.sender] = _referrer;
     }
 
