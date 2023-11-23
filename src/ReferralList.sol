@@ -26,11 +26,11 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable {
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function addReferrer(address _referrer) public {
-        if (allowedReferrers[_referrer]) revert ReferrerNotAllowed();
+        if (!allowedReferrers[_referrer]) revert ReferrerNotAllowed();
         referrals[msg.sender] = _referrer;
     }
 
-    function addAllowedReferrer(address _referrer) public {
+    function addAllowedReferrer(address _referrer) public onlyOwner {
         if (referrals[_referrer] != address(0)) revert ReferredAlreadyExists();
         allowedReferrers[_referrer] = true;
     }
