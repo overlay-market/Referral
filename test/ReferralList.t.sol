@@ -80,7 +80,7 @@ contract ReferralListTest is Test {
     function testAddAllowedReferrer() public {
         address affiliate = makeAddr("affiliate");
         rl.addAllowedReferrer(affiliate);
-        assertTrue(rl.allowedReferrers(affiliate));
+        assertTrue(rl.allowedAffiliates(affiliate));
         rl.addReferrer(affiliate);
         assertEq(rl.referrals(OWNER), affiliate);
     }

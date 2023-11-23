@@ -23,14 +23,14 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    function addReferrer(address _referrer) public {
-        if (!allowedAffiliates[_referrer]) revert ReferrerNotAllowed();
-        referrals[msg.sender] = _referrer;
+    function addReferrer(address _affiliate) public {
+        if (!allowedAffiliates[_affiliate]) revert ReferrerNotAllowed();
+        referrals[msg.sender] = _affiliate;
     }
 
-    function addAllowedReferrer(address _referrer) public onlyOwner {
-        if (allowedAffiliates[_referrer]) revert ReferredAlreadyExists();
-        allowedAffiliates[_referrer] = true;
+    function addAllowedReferrer(address _affiliate) public onlyOwner {
+        if (allowedAffiliates[_affiliate]) revert ReferredAlreadyExists();
+        allowedAffiliates[_affiliate] = true;
     }
 
     function airdropERC20(
