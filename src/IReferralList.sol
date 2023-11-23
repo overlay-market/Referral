@@ -8,4 +8,7 @@ interface IReferralList {
     event AllowAffiliates(address[] affiliates);
     event AddAffiliate(address trader, address affiliate);
     event Airdrop();
+    event SetRewardToken(address rewardToken);
+    event SetAffiliateComission(uint48 affiliateComission);
+    event SetTraderDiscount(uint48 traderDiscount);
 }

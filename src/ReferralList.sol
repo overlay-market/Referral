@@ -21,10 +21,15 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         _disableInitializers();
     }
 
-    function initialize(address _airdropper, address _rewardToken) public initializer {
+    function initialize(address _airdropper, address _rewardToken, uint48 _affiliateComission, uint48 _traderDiscount)
+        public
+        initializer
+    {
         _initializeOwner(msg.sender);
         grantRoles(_airdropper, ROLE_AIRDROPPER);
-        rewardToken = _rewardToken;
+        setRewardToken(_rewardToken);
+        setAffiliateComission(_affiliateComission);
+        setTraderDiscount(_traderDiscount);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -58,5 +63,20 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         }
 
         emit Airdrop();
+    }
+
+    function setRewardToken(address _rewardToken) public onlyOwner {
+        rewardToken = _rewardToken;
+        emit SetRewardToken(_rewardToken);
+    }
+
+    function setAffiliateComission(uint48 _affiliateComission) public onlyOwner {
+        affiliateComission = _affiliateComission;
+        emit SetAffiliateComission(_affiliateComission);
+    }
+
+    function setTraderDiscount(uint48 _traderDiscount) public onlyOwner {
+        traderDiscount = _traderDiscount;
+        emit SetTraderDiscount(_traderDiscount);
     }
 }
