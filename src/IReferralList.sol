@@ -7,4 +7,5 @@ interface IReferralList {
 
     event AllowAffiliates(address[] affiliates);
     event AddAffiliate(address trader, address affiliate);
+    event Airdrop();
 }

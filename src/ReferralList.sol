@@ -56,5 +56,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         for (uint256 i = 0; i < addressesLength; i++) {
             IERC20(_token).transfer(_addresses[i], _amounts[i]);
         }
+
+        emit Airdrop();
     }
 }
