@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface IReferralList {
-    error ReferredAlreadyExists();
-    error ReferrerNotAllowed();
+    error AffiliateAlreadyExists();
+    error AffiliateNotAllowed();
 
-    event AddAllowedAffiliates(address[] affiliates);
+    event AllowAffiliates(address[] affiliates);
+    event AddAffiliate(address trader, address affiliate);
 }
