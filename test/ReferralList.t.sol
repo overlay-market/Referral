@@ -19,7 +19,7 @@ contract ReferralListTest is Test {
         vm.createSelectFork(vm.envString("ARBITRUM_RPC"), 15_312_2295);
         vm.startPrank(OWNER);
         rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
-        rl.initialize(AIRDROPPER);
+        rl.initialize(AIRDROPPER, address(OVL));
         deal(address(OVL), AIRDROPPER, 100 ether);
     }
 
@@ -33,7 +33,7 @@ contract ReferralListTest is Test {
 
         OVL.approve(address(rl), 100 ether);
 
-        rl.airdropERC20(address(OVL), addresses, amounts, 100 ether);
+        rl.airdropERC20(addresses, amounts, 100 ether);
         assertEq(OVL.balanceOf(AIRDROPPER), 0);
 
         for (uint256 i = 0; i < 10; i++) {
@@ -53,7 +53,7 @@ contract ReferralListTest is Test {
 
         vm.expectRevert();
 
-        rl.airdropERC20(address(OVL), addresses, amounts, 100 ether);
+        rl.airdropERC20(addresses, amounts, 100 ether);
     }
 
     function testNotAirdropper() public {
@@ -68,7 +68,7 @@ contract ReferralListTest is Test {
 
         vm.expectRevert();
 
-        rl.airdropERC20(address(OVL), addresses, amounts, 100 ether);
+        rl.airdropERC20(addresses, amounts, 100 ether);
     }
 
     function testAddNotAllowedReferrer() public {
@@ -78,10 +78,13 @@ contract ReferralListTest is Test {
     }
 
     function testAddAllowedReferrer() public {
-        address affiliate = makeAddr("affiliate");
-        rl.addAllowedReferrer(affiliate);
-        assertTrue(rl.allowedAffiliates(affiliate));
-        rl.addReferrer(affiliate);
-        assertEq(rl.referrals(OWNER), affiliate);
+        address[] memory affiliates = new address[](2);
+        address affiliate1 = makeAddr("affiliate1");
+        address affiliate2 = makeAddr("affiliate2");
+        rl.addAllowedReferrerBatch(affiliates);
+        assertTrue(rl.allowedAffiliates(affiliate1));
+        assertTrue(rl.allowedAffiliates(affiliate2));
+        rl.addReferrer(affiliate1);
+        assertEq(rl.referrals(OWNER), affiliate1);
     }
 }

@@ -12,13 +12,16 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     mapping(address trader => address affiliate) public referrals;
     mapping(address affiliate => bool isAllowed) public allowedAffiliates;
 
+    programConfig public config;
+
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(address _airdropper) public initializer {
+    function initialize(address _airdropper, address _rewardToken) public initializer {
         _initializeOwner(msg.sender);
         grantRoles(_airdropper, ROLE_AIRDROPPER);
+        config.rewardToken = _rewardToken;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -36,12 +39,12 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         }
     }
 
-    function airdropERC20(
-        address _token,
-        address[] calldata _addresses,
-        uint256[] calldata _amounts,
-        uint256 _totalAmount
-    ) external payable onlyRoles(ROLE_AIRDROPPER) {
+    function airdropERC20(address[] calldata _addresses, uint256[] calldata _amounts, uint256 _totalAmount)
+        external
+        payable
+        onlyRoles(ROLE_AIRDROPPER)
+    {
+        address _token = config.rewardToken;
         assembly {
             // Check that the number of addresses matches the number of amounts
             if iszero(eq(_amounts.length, _addresses.length)) { revert(0, 0) }
