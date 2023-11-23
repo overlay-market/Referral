@@ -4,11 +4,9 @@ pragma solidity ^0.8.0;
 import {OwnableRoles} from "solady/src/auth/OwnableRoles.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {IReferralList} from "src/IReferralList.sol";
 
-contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable {
-    error ReferredAlreadyExists();
-    error ReferrerNotAllowed();
-
+contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferralList {
     uint256 public constant ROLE_AIRDROPPER = uint256(keccak256("ROLE_AIRDROPPER"));
 
     mapping(address trader => address affiliate) public referrals;
