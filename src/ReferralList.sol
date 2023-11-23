@@ -54,7 +54,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         onlyRoles(ROLE_AIRDROPPER)
     {
         uint256 addressesLength = _addresses.length;
-        require(addressesLength == _amounts.length, "ReferralList: addresses and amounts length mismatch");
+        if (addressesLength != _amounts.length) revert LengthMismatch();
         address _token = rewardToken;
 
         IERC20(_token).transferFrom(msg.sender, address(this), _totalAmount);
