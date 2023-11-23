@@ -72,16 +72,16 @@ contract ReferralListTest is Test {
     }
 
     function testAddNotAllowedReferrer() public {
-        address referrer = makeAddr("referrer");
+        address affiliate = makeAddr("affiliate");
         vm.expectRevert();
-        rl.addReferrer(referrer);
+        rl.addReferrer(affiliate);
     }
 
     function testAddAllowedReferrer() public {
-        address referrer = makeAddr("referrer");
-        rl.addAllowedReferrer(referrer);
-        assertTrue(rl.allowedReferrers(referrer));
-        rl.addReferrer(referrer);
-        assertEq(rl.referrals(OWNER), referrer);
+        address affiliate = makeAddr("affiliate");
+        rl.addAllowedReferrer(affiliate);
+        assertTrue(rl.allowedReferrers(affiliate));
+        rl.addReferrer(affiliate);
+        assertEq(rl.referrals(OWNER), affiliate);
     }
 }

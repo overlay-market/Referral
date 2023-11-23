@@ -11,8 +11,8 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable {
 
     uint256 public constant ROLE_AIRDROPPER = uint256(keccak256("ROLE_AIRDROPPER"));
 
-    mapping(address referred => address referrer) public referrals;
-    mapping(address referrer => bool isAllowed) public allowedReferrers;
+    mapping(address trader => address affiliate) public referrals;
+    mapping(address affiliate => bool isAllowed) public allowedAffiliates;
 
     constructor() {
         _disableInitializers();
@@ -26,13 +26,13 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable {
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function addReferrer(address _referrer) public {
-        if (!allowedReferrers[_referrer]) revert ReferrerNotAllowed();
+        if (!allowedAffiliates[_referrer]) revert ReferrerNotAllowed();
         referrals[msg.sender] = _referrer;
     }
 
     function addAllowedReferrer(address _referrer) public onlyOwner {
-        if (referrals[_referrer] != address(0)) revert ReferredAlreadyExists();
-        allowedReferrers[_referrer] = true;
+        if (allowedAffiliates[_referrer]) revert ReferredAlreadyExists();
+        allowedAffiliates[_referrer] = true;
     }
 
     function airdropERC20(
