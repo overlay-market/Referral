@@ -12,28 +12,28 @@ contract ReferralListTest is Test {
     address private AIRDROPPER = makeAddr("airdropper");
     ReferralList rl;
 
-    address[] addresses = new address[](10);
-    uint256[] amounts = new uint256[](10);
+    address[] addresses = new address[](500);
+    uint256[] amounts = new uint256[](500);
 
     function setUp() public {
         vm.createSelectFork(vm.envString("ARBITRUM_RPC"), 15_312_2295);
         vm.startPrank(OWNER);
         rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
         rl.initialize(AIRDROPPER, address(OVL));
-        deal(address(OVL), AIRDROPPER, 100 ether);
+        deal(address(OVL), AIRDROPPER, 5000 ether);
     }
 
     function testHappyPath() public {
-        for (uint256 i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 500; i++) {
             addresses[i] = address(uint160(i + 1));
             amounts[i] = 10 ether;
         }
 
         vm.startPrank(AIRDROPPER);
 
-        OVL.approve(address(rl), 100 ether);
+        OVL.approve(address(rl), 5000 ether);
 
-        rl.airdropERC20(addresses, amounts, 100 ether);
+        rl.airdropERC20(addresses, amounts, 5000 ether);
         assertEq(OVL.balanceOf(AIRDROPPER), 0);
 
         for (uint256 i = 0; i < 10; i++) {
@@ -77,14 +77,14 @@ contract ReferralListTest is Test {
         rl.addReferrer(affiliate);
     }
 
-    function testAddAllowedReferrer() public {
+    function testAddAllowedReferrers() public {
         address[] memory affiliates = new address[](2);
-        address affiliate1 = makeAddr("affiliate1");
-        address affiliate2 = makeAddr("affiliate2");
-        rl.addAllowedReferrerBatch(affiliates);
-        assertTrue(rl.allowedAffiliates(affiliate1));
-        assertTrue(rl.allowedAffiliates(affiliate2));
-        rl.addReferrer(affiliate1);
-        assertEq(rl.referrals(OWNER), affiliate1);
+        affiliates[0] = makeAddr("affiliate1");
+        affiliates[1] = makeAddr("affiliate2");
+        rl.addAllowedReferrers(affiliates);
+        assertTrue(rl.allowedAffiliates(affiliates[0]));
+        assertTrue(rl.allowedAffiliates(affiliates[1]));
+        rl.addReferrer(affiliates[0]);
+        assertEq(rl.referrals(OWNER), affiliates[0]);
     }
 }

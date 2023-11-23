@@ -5,10 +5,5 @@ interface IReferralList {
     error ReferredAlreadyExists();
     error ReferrerNotAllowed();
 
-    struct programConfig {
-        address rewardToken;
-        uint32 affiliateComission;
-        uint32 traderDiscount;
-        uint32 traderDiscountTimePeriod;
-    }
+    event AddAllowedAffiliates(address[] affiliates);
 }
