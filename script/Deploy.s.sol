@@ -9,15 +9,17 @@ import {ReferralListProxy} from "src/ProxyWrapper.sol";
 abstract contract DeployReferralList is Script {
     function _deploy() internal {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address owner_ = vm.envAddress("OWNER_ADDRESS");
         address _airdropper = vm.envAddress("AIRDROPPER_ADDRESS");
         address _rewardToken = vm.envAddress("OV_CONTRACT");
         uint48 _affiliateComission = uint48(vm.envUint("AFFILIATE_COMMISION"));
         uint48 _traderDiscount = uint48(vm.envUint("TRADER_COMMISION"));
 
         /*Proxy initialize data*/
-        string memory functionName = "initialize(address,address,uint48,uint48)";
-        bytes memory data =
-            abi.encodeWithSignature(functionName, _airdropper, _rewardToken, _affiliateComission, _traderDiscount);
+        string memory functionName = "initialize(address,address,address,uint48,uint48)";
+        bytes memory data = abi.encodeWithSignature(
+            functionName, owner_, _airdropper, _rewardToken, _affiliateComission, _traderDiscount
+        );
 
         vm.startBroadcast(deployerPrivateKey);
         ReferralList impl = new ReferralList();
@@ -39,9 +41,8 @@ forge verify-contract \
     --num-of-optimizations 200 \
     --watch \
     --etherscan-api-key <api> \
-    --constructor-args $(cast abi-encode "constructor(address,bytes)" 0x4316E319944E6880145Ca8c1B3A71528903cf963 0x2dd504510000000000000000000000009c3c9283d3e44854697cd22d3faa240cfb0328890000000000000000000000004305c4bc521b052f17d389c2fe9d37cabeb70d5400000000000000000000000000000000000000000000000000000000000186a000000000000000000000000000000000000000000000000000000000000186a0) \
     --compiler-version v0.8.23 \
-    0x426cB483cad253aa7E514c6C2B76a3c215d9065b \
-    src/ProxyWrapper.sol:ReferralListProxy \
+    0xd1d872536A44A3b6af72238fd04822B1C8C38386 \
+    src/ReferralList.sol:ReferralList \
 
 */

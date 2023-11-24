@@ -20,7 +20,7 @@ contract ReferralListTest is Test {
         vm.createSelectFork(vm.envString("MAINNET_RPC"), 15_312_2295);
         vm.startPrank(OWNER);
         rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
-        rl.initialize(AIRDROPPER, address(OVL), 1000, 1000);
+        rl.initialize(OWNER, AIRDROPPER, address(OVL), 1000, 1000);
         deal(address(OVL), AIRDROPPER, 5000 ether);
     }
 

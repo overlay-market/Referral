@@ -21,11 +21,14 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         _disableInitializers();
     }
 
-    function initialize(address _airdropper, address _rewardToken, uint48 _affiliateComission, uint48 _traderDiscount)
-        public
-        initializer
-    {
-        _initializeOwner(msg.sender);
+    function initialize(
+        address owner_,
+        address _airdropper,
+        address _rewardToken,
+        uint48 _affiliateComission,
+        uint48 _traderDiscount
+    ) public initializer {
+        _initializeOwner(owner_);
         grantRoles(_airdropper, ROLE_AIRDROPPER);
         setRewardToken(_rewardToken);
         setAffiliateComission(_affiliateComission);
