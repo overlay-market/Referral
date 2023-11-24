@@ -6,4 +6,12 @@ libs = ["lib"]
 #https://docs.arbitrum.io/for-devs/concepts/differences-between-arbitrum-ethereum/solidity-support
 evm_version = "paris"
 
+[rpc_endpoints]
+mainnet = "${MAINNET_RPC}"
+sepolia = "${SEPOLIA_RPC}"
+
+[etherscan]
+mainnet = { key = "${ARBISCAN_API_KEY}" } 
+sepolia = { key = "${ARBISCAN_API_KEY}" }
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
