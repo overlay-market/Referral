@@ -8,7 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract ReferralListTest is Test {
-    IERC20 constant OVL = IERC20(0x4305C4Bc521B052F17d389c2Fe9d37caBeB70d54);
+    IERC20 private OVL = IERC20(vm.envAddress("OV_CONTRACT"));
     address private OWNER = makeAddr("owner");
     address private AIRDROPPER = makeAddr("airdropper");
     ReferralList rl;
@@ -17,7 +17,7 @@ contract ReferralListTest is Test {
     uint256[] amounts = new uint256[](500);
 
     function setUp() public {
-        vm.createSelectFork(vm.envString("ARBITRUM_RPC"), 15_312_2295);
+        vm.createSelectFork(vm.envString("MAINNET_RPC"), 15_312_2295);
         vm.startPrank(OWNER);
         rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
         rl.initialize(AIRDROPPER, address(OVL), 1000, 1000);
