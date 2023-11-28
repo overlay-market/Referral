@@ -101,6 +101,7 @@ contract ReferralListTest is Test {
     }
 
     function testAllowAffiliates() public {
+        vm.startPrank(AIRDROPPER);
         address[] memory affiliates = new address[](2);
         affiliates[0] = makeAddr("affiliate1");
         affiliates[1] = makeAddr("affiliate2");
@@ -110,10 +111,11 @@ contract ReferralListTest is Test {
         assertTrue(rl.allowedAffiliates(affiliates[0]));
         assertTrue(rl.allowedAffiliates(affiliates[1]));
         rl.addAffiliate(affiliates[0]);
-        assertEq(rl.referrals(OWNER), affiliates[0]);
+        assertEq(rl.referrals(AIRDROPPER), affiliates[0]);
     }
 
     function testSetRewardToken() public {
+        vm.startPrank(AIRDROPPER);
         address token = makeAddr("token");
         vm.expectEmit();
         emit IReferralList.SetRewardToken(token);
@@ -122,6 +124,7 @@ contract ReferralListTest is Test {
     }
 
     function testSetAffiliateComission(uint48 comission) public {
+        vm.startPrank(AIRDROPPER);
         vm.expectEmit();
         emit IReferralList.SetAffiliateComission(comission);
         rl.setAffiliateComission(comission);
@@ -129,6 +132,7 @@ contract ReferralListTest is Test {
     }
 
     function testSetTraderDiscount(uint48 discount) public {
+        vm.startPrank(AIRDROPPER);
         vm.expectEmit();
         emit IReferralList.SetTraderDiscount(discount);
         rl.setTraderDiscount(discount);

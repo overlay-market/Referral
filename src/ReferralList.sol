@@ -8,7 +8,8 @@ import {IReferralList} from "src/IReferralList.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferralList {
-    uint256 public constant ROLE_AIRDROPPER = uint256(keccak256("ROLE_AIRDROPPER"));
+    uint256 internal constant ROLE_ADMIN = 1 << 0;
+    uint256 internal constant ROLE_AIRDROPPER = 1 << 1;
 
     mapping(address trader => address affiliate) public referrals;
     mapping(address affiliate => bool isAllowed) public allowedAffiliates;
@@ -29,10 +30,10 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         uint48 _traderDiscount
     ) public initializer {
         _initializeOwner(owner_);
-        grantRoles(_airdropper, ROLE_AIRDROPPER);
-        setRewardToken(_rewardToken);
-        setAffiliateComission(_affiliateComission);
-        setTraderDiscount(_traderDiscount);
+        grantRoles(_airdropper, 3);
+        _setRewardToken(_rewardToken);
+        _setAffiliateComission(_affiliateComission);
+        _setTraderDiscount(_traderDiscount);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -43,7 +44,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         emit AddAffiliate(msg.sender, _affiliate);
     }
 
-    function allowAffiliates(address[] memory _affiliates) public onlyOwner {
+    function allowAffiliates(address[] memory _affiliates) public onlyRoles(ROLE_ADMIN) {
         for (uint256 i = 0; i < _affiliates.length; i++) {
             address affiliate = _affiliates[i];
             if (allowedAffiliates[affiliate]) revert AffiliateAlreadyExists();
@@ -68,17 +69,29 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         emit Airdrop();
     }
 
-    function setRewardToken(address _rewardToken) public onlyOwner {
+    function setRewardToken(address _rewardToken) public onlyRoles(ROLE_ADMIN) {
+        _setRewardToken(_rewardToken);
+    }
+
+    function _setRewardToken(address _rewardToken) internal {
         rewardToken = _rewardToken;
         emit SetRewardToken(_rewardToken);
     }
 
-    function setAffiliateComission(uint48 _affiliateComission) public onlyOwner {
+    function setAffiliateComission(uint48 _affiliateComission) public onlyRoles(ROLE_ADMIN) {
+        _setAffiliateComission(_affiliateComission);
+    }
+
+    function _setAffiliateComission(uint48 _affiliateComission) internal {
         affiliateComission = _affiliateComission;
         emit SetAffiliateComission(_affiliateComission);
     }
 
-    function setTraderDiscount(uint48 _traderDiscount) public onlyOwner {
+    function setTraderDiscount(uint48 _traderDiscount) public onlyRoles(ROLE_ADMIN) {
+        _setTraderDiscount(_traderDiscount);
+    }
+
+    function _setTraderDiscount(uint48 _traderDiscount) internal {
         traderDiscount = _traderDiscount;
         emit SetTraderDiscount(_traderDiscount);
     }
