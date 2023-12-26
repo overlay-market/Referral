@@ -12,45 +12,47 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     uint256 internal constant ROLE_AIRDROPPER = 1 << 1;
 
     mapping(address trader => address affiliate) public referrals;
-    mapping(address affiliate => bool isAllowed) public allowedAffiliates;
+    mapping(address affiliate => Tier) public userTier;
+    mapping(Tier => uint48) public tierAffiliateComission;
+    mapping(Tier => uint48) public tierTraderDiscount;
 
     address public rewardToken;
-    uint48 public affiliateComission;
-    uint48 public traderDiscount;
 
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(
-        address owner_,
-        address _airdropper,
-        address _rewardToken,
-        uint48 _affiliateComission,
-        uint48 _traderDiscount
-    ) public initializer {
+    function initialize(address owner_, address _airdropper, address _rewardToken) public initializer {
         _initializeOwner(owner_);
         grantRoles(_airdropper, 3);
         _setRewardToken(_rewardToken);
-        _setAffiliateComission(_affiliateComission);
-        _setTraderDiscount(_traderDiscount);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    function addAffiliate(address _affiliate) public {
-        if (!allowedAffiliates[_affiliate]) revert AffiliateNotAllowed();
-        referrals[msg.sender] = _affiliate;
-        emit AddAffiliate(msg.sender, _affiliate);
+    function addAffiliate(address _user) public {
+        if (userTier[_user] == Tier.AFFILIATE) revert AffiliateNotAllowed();
+        referrals[msg.sender] = _user;
+        emit AddAffiliate(msg.sender, _user);
     }
 
-    function allowAffiliates(address[] memory _affiliates) public onlyRoles(ROLE_ADMIN) {
-        for (uint256 i = 0; i < _affiliates.length; i++) {
-            address affiliate = _affiliates[i];
-            if (allowedAffiliates[affiliate]) revert AffiliateAlreadyExists();
-            allowedAffiliates[affiliate] = true;
-        }
-        emit AllowAffiliates(_affiliates);
+    function addKOL(address _user) public {
+        if (userTier[_user] == Tier.KOL) revert AffiliateNotAllowed();
+        referrals[msg.sender] = _user;
+        emit AddAffiliate(msg.sender, _user);
+    }
+
+    // TODO: Modify to use signature
+    function allowAffiliates(address _affiliate) public onlyRoles(ROLE_ADMIN) {
+        if (userTier[_affiliate] == Tier.AFFILIATE) revert AffiliateAlreadyExists();
+        userTier[_affiliate] = Tier.AFFILIATE;
+        emit AllowAffiliate(_affiliate);
+    }
+
+    function allowKOL(address _KOL) public onlyRoles(ROLE_ADMIN) {
+        if (userTier[_KOL] == Tier.KOL) revert AffiliateAlreadyExists();
+        userTier[_KOL] = Tier.KOL;
+        emit AllowKOL(_KOL);
     }
 
     function airdropERC20(address[] calldata _addresses, uint256[] calldata _amounts, uint256 _totalAmount)
@@ -78,21 +80,21 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         emit SetRewardToken(_rewardToken);
     }
 
-    function setAffiliateComission(uint48 _affiliateComission) public onlyRoles(ROLE_ADMIN) {
-        _setAffiliateComission(_affiliateComission);
+    function setAffiliateComission(Tier _tier, uint48 _affiliateComission) public onlyRoles(ROLE_ADMIN) {
+        _setAffiliateComission(_tier, _affiliateComission);
     }
 
-    function _setAffiliateComission(uint48 _affiliateComission) internal {
-        affiliateComission = _affiliateComission;
-        emit SetAffiliateComission(_affiliateComission);
+    function _setAffiliateComission(Tier _tier, uint48 _affiliateComission) internal {
+        tierAffiliateComission[_tier] = _affiliateComission;
+        emit SetAffiliateComission(_tier, _affiliateComission);
     }
 
-    function setTraderDiscount(uint48 _traderDiscount) public onlyRoles(ROLE_ADMIN) {
-        _setTraderDiscount(_traderDiscount);
+    function setTraderDiscount(Tier _tier, uint48 _traderDiscount) public onlyRoles(ROLE_ADMIN) {
+        _setTraderDiscount(_tier, _traderDiscount);
     }
 
-    function _setTraderDiscount(uint48 _traderDiscount) internal {
-        traderDiscount = _traderDiscount;
-        emit SetTraderDiscount(_traderDiscount);
+    function _setTraderDiscount(Tier _tier, uint48 _traderDiscount) internal {
+        tierTraderDiscount[_tier] = _traderDiscount;
+        emit SetTraderDiscount(_tier, _traderDiscount);
     }
 }
