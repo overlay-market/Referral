@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from "@nestjs/common"
+import { BadRequestException, Controller, Get, Param } from "@nestjs/common"
 import { SignaturesService } from "./signatures.service"
 
 // All the routes for this controller will be prefixed with `/signatures`
@@ -7,7 +7,11 @@ export class SignaturesController {
     constructor(private readonly signaturesService: SignaturesService) {}
 
     @Get(":account")
-    requestSignature(@Param("account") account: string) {
-        return this.signaturesService.requestSignature(account)
+    async requestSignature(@Param("account") account: string) {
+        try {
+            return await this.signaturesService.requestSignature(account)
+        } catch (error) {
+            throw new BadRequestException(error.message)
+        }
     }
 }
