@@ -3,6 +3,7 @@ const { network } = require("hardhat");
 const abi = require("./abi/abi1.json");
 const config = require("./config.json");
 const abi2 = require("./abi/abi2.json");
+const referralClass = require("./referral.js");
 
 const networks = {
   name: "Arbitrum",
@@ -61,26 +62,20 @@ function getAddress(address, abii) {
   return contract;
 }
 
-/**
- * @dev Reads event from Build(),
- * Calculates the tradingFee and calls referral class.
- */
-async function read(sender, id, referral, stateContract, marketContract) {
-  if (await referral.hasReferrer(sender)) {
-    const notional = await stateContract.notional(
-      marketContract.address,
-      sender,
-      id
-    );
-    const riskParamTradingFee = await marketContract.params(11);
+function getReferral() {
+  const referral = new referralClass(
+    (decimals = 1000),
+    (referralBonus = 800),
+    (levelRate = [400, 300, 200, 100]),
+    (maxReferDepth = 4),
+    (discountDays = 2592000),
+    (discountBonus = 200)
+  );
 
-    const userTradingFee = notional * riskParamTradingFee;
-    await referral.updateReferral(userTradingFee / 1e18, sender);
-  } else return "user has no referral";
+  return referral
 }
 
 module.exports = {
-  read,
   impersonate,
   fork_network,
   SOL_USDmarket,
@@ -90,4 +85,5 @@ module.exports = {
   AVAX_USDmarket,
   getLiveAddress,
   MATIC_USDmarket,
+  getReferral
 };

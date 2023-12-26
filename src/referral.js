@@ -34,7 +34,11 @@ module.exports = class Referral {
           referralBonus: referralBonus,
           discountBonus: discountBonus,
           totalRewardsAvailableForClaim: 0,
-          users: { users: ["users referral links", "users addresses"] },
+          users: [],
+          lastUpdate: {
+            build: 0,
+            unwind: 0
+          }
         });
       }
     });
@@ -55,7 +59,7 @@ module.exports = class Referral {
    * @dev check whether an address has the referrer
    */
   async hasReferrer(addr) {
-    const userAccount = await account.findOne({ user: addr });
+    const userAccount = await account.findOne({ user: addr.toLowerCase() });
     if (userAccount != null) {
       return true;
     } else {
@@ -67,63 +71,45 @@ module.exports = class Referral {
    * @dev check whether an address is part of the program
    */
   async isUser(addr) {
-    const userAccount = await account.findOne({ user: addr });
+    const userAccount = await account.findOne({ user: addr.toLowerCase() });
     return userAccount != null;
   }
 
   async createReferralCode(referralDetails) {
     // gets account DB of user that wants an account created
     let senderAccount = await account.findOne({
-      user: referralDetails.sender,
+      user: referralDetails.sender.toLowerCase(),
     });
 
-    if (await this.checkForUsernameInProgram(referralDetails.username))
+    if (await this.checkForUsernameInProgram(referralDetails.username.toLowerCase()))
       throw new Error("username already exist");
 
     if (
       senderAccount != null &&
-      senderAccount.referralLinks["none"] == undefined
+      senderAccount.referralLinks !== undefined &&
+      senderAccount.referralLinks.length > 0
     ) {
+      console.log(senderAccount.referralLinks)
       throw new Error("Can't create more than one referral link");
     }
 
-    const userNewReferralLink = `https://app.overlay.market/#/markets?ref=${referralDetails.username}`;
+    const userNewReferralLink = `https://app.overlay.market/#/markets?ref=${referralDetails.username.toLowerCase()}`;
     const data = await referralProgramData.findOne({ RPD: "RPD" });
 
-    // add referralDetails.username to DB for all users
-    const object = data.users["users"] != undefined ? {} : data.users;
-
-    const obj = await this.getObject(object, referralDetails.username, [
-      userNewReferralLink,
-      referralDetails.sender,
-    ]);
-
-    data.users = obj;
+    data.users.set(referralDetails.username.toLowerCase(), {referralLink: userNewReferralLink, address: referralDetails.sender.toLowerCase()})
     await this.save(data);
 
     // check if account is already created
     if (senderAccount == null) {
-      let userNewReferral = {};
-      userNewReferral[referralDetails.username] = userNewReferralLink;
 
-      await this.create(
-        referralDetails.sender,
+      await this.createAccount(
+        referralDetails.sender.toLowerCase(),
         "",
         this.getDateInSeconds(),
-        userNewReferral
+        referralDetails.username.toLowerCase()
       );
-    } else if (
-      senderAccount != null &&
-      senderAccount.referralLinks["none"] != undefined
-    ) {
-      // if not create one
-      let obj = await this.getObject(
-        {},
-        referralDetails.username,
-        userNewReferralLink
-      );
-
-      senderAccount.referralLinks = obj;
+    } else {
+      senderAccount.referralLinks.push(referralDetails.username.toLowerCase())
       await this.save(senderAccount);
     }
     return userNewReferralLink;
@@ -134,12 +120,12 @@ module.exports = class Referral {
    */
   async addReferrer(referralDetails) {
     let referrerAccount = await account.findOne({
-      user: referralDetails.referrer,
+      user: referralDetails.referrer.toLowerCase(),
     });
 
-    let userAccount = await account.findOne({ user: referralDetails.sender });
+    let userAccount = await account.findOne({ user: referralDetails.sender.toLowerCase() });
 
-    if (await this.hasReferrer(referralDetails.sender)) {
+    if (await this.hasReferrer(referralDetails.sender.toLowerCase())) {
       throw new Error("Already has a referral");
     }
 
@@ -149,11 +135,10 @@ module.exports = class Referral {
 
     // checks if user adding a referral has a created account or not
     if (userAccount == null) {
-      await this.create(
-        referralDetails.sender,
-        referralDetails.referrer,
-        this.getDateInSeconds(),
-        { none: "none" }
+      await this.createAccount(
+        referralDetails.sender.toLowerCase(),
+        referralDetails.referrer.toLowerCase(),
+        this.getDateInSeconds()
       );
     }
 
@@ -165,12 +150,21 @@ module.exports = class Referral {
 
   /**
    * @dev This will calc and update rewards to uplines instantly
+   * @param {Number} value - The total fee payed by the user
+   * @param {String} sender - The sender of the transaction
+   * @param {Number} txTimestamp - The timestamp of the transaction
    */
-  async updateReferral(value, sender) {
-    let userAccount = await account.findOne({ user: sender });
-    let user = await account.findOne({ user: sender });
+  async updateReferral(value, sender, txTimestamp) {
+    // Find the user's account and referral program data
+    let userAccount = await account.findOne({ user: sender.toLowerCase() });
     let data = this.programData;
 
+    // If the user account doesn't exist or the account creation date  is after the transaction timestamp, return 0
+    if (!userAccount || userAccount.date > txTimestamp ) {
+      return 0
+    }
+
+    // Loop through each levelRate to calculate and distribute rewards to uplines
     for (let i = 0; i < data.levelRate.length; i++) {
       // gets the next upline of user that built a position and pays them i.e;
       // userThatBuiltPosition ---> referrer --- 1stDirectUpline
@@ -179,6 +173,7 @@ module.exports = class Referral {
       let parent = userAccount.referrer;
       let parentAccount = await account.findOne({ user: userAccount.referrer });
 
+      // If there is no parent (referrer), break the loop
       if (parent == "") {
         break;
       }
@@ -187,21 +182,30 @@ module.exports = class Referral {
       let c = (value * data.referralBonus) / data.decimal;
       c = (c * data.levelRate[i]) / data.decimal;
 
+      // update parentAccount with the reward
       parentAccount.reward += c;
+      // update totalRewards with the reward
       data.totalRewardsAvailableForClaim += c;
 
-      await this.save(data);
       await this.save(parentAccount);
 
+      // update userAccount as parentAccount to get next upline parent in the loop
       userAccount = parentAccount;
     }
 
+    let user = await account.findOne({ user: sender.toLowerCase() });
     // gets discount as a new user for the duration of discountDays
-    if (user.date + data.discountDays > this.getDateInSeconds()) {
+    if (user.date + data.discountDays > txTimestamp) {
+      // calculates the portion of fees to discount
       let discount = (value * data.discountBonus) / data.decimal;
-      user.discount = user.discount + discount;
+
+      // update user with the discount
+      user.discount += discount;
+      // update totalRewards with the discount
+      data.totalRewardsAvailableForClaim += discount
       await this.save(user);
     }
+    await this.save(data);
   }
 
   /**
@@ -209,9 +213,9 @@ module.exports = class Referral {
    */
   async getUserUplines(sender) {
     let uplines = [];
-    let userAccount = await account.findOne({ user: sender });
+    let userAccount = await account.findOne({ user: sender.toLowerCase() });
 
-    if (!this.hasReferrer(sender) || userAccount.referrer == "") return [];
+    if (!this.hasReferrer(sender.toLowerCase()) || userAccount.referrer == "") return [];
 
     for (let i = 0; i < this.programData.levelRate.length; i++) {
       let parent = userAccount.referrer;
@@ -234,7 +238,7 @@ module.exports = class Referral {
    */
   async checkForUsernameInProgram(userName) {
     const data = await referralProgramData.findOne({ RPD: "RPD" });
-    let result = await data.users[`${userName}`];
+    let result = data.users.get(`${userName.toLowerCase()}`);
     return result != undefined;
   }
 
@@ -243,19 +247,20 @@ module.exports = class Referral {
    */
   async deleteUserReferralLink(userName) {
     const data = await referralProgramData.findOne({ RPD: "RPD" });
-    const result = await data.users[`${userName}`];
+    const result = data.users.get(`${userName.toLowerCase()}`);
 
-    if (result == null) throw new Error("user does not exist");
-    let userAccount = await account.findOne({ user: result[1] });
+    if (!result) throw new Error("user does not exist");
+    let userAccount = await account.findOne({ user: result.address });
 
-    let newObj0 = { ...data.users };
-    let newObj1 = { ...userAccount.referralLinks };
+    const indexToDelete = userAccount.referralLinks.indexOf(userName)
 
-    delete newObj0[`${userName}`];
-    delete newObj1[`${userName}`];
+    // Check if the item exists in the array
+    if (indexToDelete > -1) {
+      // Use splice() to remove the item at the found index
+      userAccount.referralLinks.splice(indexToDelete, 1);
+    }
 
-    data.users = newObj0;
-    userAccount.referralLinks = newObj1;
+    data.users.delete(`${userName.toLowerCase()}`)
 
     await this.save(data);
     await this.save(userAccount);
@@ -266,9 +271,9 @@ module.exports = class Referral {
    */
   async getUserAddressViaLink(userName) {
     const data = await referralProgramData.findOne({ RPD: "RPD" });
-    let result = await data.users[`${userName}`];
+    let result = data.users.get(`${userName.toLowerCase()}`);
 
-    if (result != null) return result[1];
+    if (result) return result.address;
     else {
       throw new Error("user does not exist");
     }
@@ -311,6 +316,24 @@ module.exports = class Referral {
   }
 
   /**
+   * @dev Used to set new build lastUpdate
+   */
+  async setBuildLastUpdate(newValue) {
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    data.lastUpdate.build = newValue;
+    await this.save(data);
+  }
+
+  /**
+   * @dev Used to set new unwind lastUpdate
+   */
+  async setUnwindLastUpdate(newValue) {
+    const data = await referralProgramData.findOne({ RPD: "RPD" });
+    data.lastUpdate.unwind = newValue;
+    await this.save(data);
+  }
+
+  /**
    * @dev gets referral bonus
    */
   async getProgramData() {
@@ -322,7 +345,7 @@ module.exports = class Referral {
    * @dev gets users referral count
    */
   async getUserInfo(user) {
-    let userAccount = await account.findOne({ user: user });
+    let userAccount = await account.findOne({ user: user.toLowerCase() });
     return userAccount;
   }
 
@@ -339,7 +362,7 @@ module.exports = class Referral {
   /**
    * @dev Creates new DB for account collection.
    */
-  async create(sender, referrer, date, referralLink) {
+  async createAccount(sender, referrer, date, referralLink = null) {
     try {
       await account.create({
         user: sender,
@@ -347,8 +370,9 @@ module.exports = class Referral {
         reward: 0,
         date: date,
         discount: 0,
+        redeemed: 0,
         referredCount: 0,
-        referralLinks: referralLink,
+        referralLinks: [referralLink],
       });
     } catch (error) {
       throw new Error(`Error creating account in collection: ` + error.message);

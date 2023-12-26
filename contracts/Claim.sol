@@ -4,7 +4,7 @@
  * Created on 2023-05-24 01:00
  * @Summary A smart contract that let users claim referral rewards
  * @title Claim
- * @author: Overlay - c-n-o-t-e
+ * @author: Overlay - c-n-o-t-e & tomascimach
  */
 
 pragma solidity ^0.8.13;
@@ -32,6 +32,10 @@ contract Claim is Pausable, ReentrancyGuard, SignerManager {
     uint256 private totalDailyClaimed;
     uint256 private lastResetTimestamp;
 
+    event TokensClaimed(address indexed recipient, uint256 amount);
+    event TokensWithdrawn(address indexed recipient, uint256 amount);
+    event MaxDailyClaimUpdated(uint256 newMaxDailyClaim);
+
     constructor(address _tokenAddress, uint256 _maxDailyClaim) {
         token = IERC20(_tokenAddress);
         lastResetTimestamp = block.timestamp;
@@ -48,6 +52,7 @@ contract Claim is Pausable, ReentrancyGuard, SignerManager {
 
     function setMaxDailyClaim(uint256 _maxDailyClaim) external onlyOwner {
         maxDailyClaim = _maxDailyClaim;
+        emit MaxDailyClaimUpdated(_maxDailyClaim);
     }
 
     function claimToken(
@@ -84,6 +89,8 @@ contract Claim is Pausable, ReentrancyGuard, SignerManager {
 
         totalDailyClaimed += amount;
 
+        emit TokensClaimed(recipient, amount);
+
         token.safeTransfer(recipient, amount);
     }
 
@@ -93,6 +100,8 @@ contract Claim is Pausable, ReentrancyGuard, SignerManager {
     ) external onlyOwner {
         if (token.balanceOf(address(this)) < _amount)
             revert Claim_Contract_Does_Not_Have_Enough_Tokens();
+
+        emit TokensWithdrawn(_recipient, _amount);
 
         token.safeTransfer(_recipient, _amount);
     }

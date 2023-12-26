@@ -4,6 +4,8 @@ const accountSchema = new mongoose.Schema({
   user: {
     type: String,
     required: true,
+    index: true,
+    unique: true,
   },
   referrer: {
     type: String,
@@ -13,11 +15,15 @@ const accountSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  date: {
+  discount: {
     type: Number,
     required: true,
   },
-  discount: {
+  redeemed: {
+    type: Number,
+    required: true,
+  },
+  date: {
     type: Number,
     required: true,
   },
@@ -26,9 +32,9 @@ const accountSchema = new mongoose.Schema({
     required: true,
   },
   referralLinks: {
-    type: Object,
+    type: [String],
   },
 });
 
 // connect accountSchema with the "accounts" collection
-module.exports = mongoose.model("account", accountSchema);
+module.exports = mongoose.model("accounts", accountSchema);
