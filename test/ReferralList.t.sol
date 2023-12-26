@@ -38,6 +38,16 @@ contract ReferralListTest is Test {
         rl.allowAffiliate(signature);
     }
 
+    function testAllowAffiliateInvalidSignature() public {
+        bytes4 selector = bytes4(keccak256("InvalidSignature()"));
+        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        vm.startPrank(makeAddr("kaker"));
+        vm.expectRevert(selector);
+        rl.allowAffiliate(signature);
+    }
+
     function testSuccesfulAirdrop() public {
         for (uint256 i = 0; i < 500; i++) {
             addresses[i] = address(uint160(i + 1));
