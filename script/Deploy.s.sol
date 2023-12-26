@@ -12,14 +12,11 @@ abstract contract DeployReferralList is Script {
         address owner_ = vm.envAddress("OWNER_ADDRESS");
         address _airdropper = vm.envAddress("AIRDROPPER_ADDRESS");
         address _rewardToken = vm.envAddress("OV_CONTRACT");
-        uint48 _affiliateComission = uint48(vm.envUint("AFFILIATE_COMMISION"));
-        uint48 _traderDiscount = uint48(vm.envUint("TRADER_COMMISION"));
+        address _verifyingAddress = vm.envAddress("VERIFIER_ADDRESS");
 
         /*Proxy initialize data*/
-        string memory functionName = "initialize(address,address,address,uint48,uint48)";
-        bytes memory data = abi.encodeWithSignature(
-            functionName, owner_, _airdropper, _rewardToken, _affiliateComission, _traderDiscount
-        );
+        string memory functionName = "initialize(address,address,address,address)";
+        bytes memory data = abi.encodeWithSignature(functionName, owner_, _airdropper, _rewardToken, _verifyingAddress);
 
         vm.startBroadcast(deployerPrivateKey);
         ReferralList impl = new ReferralList();

@@ -48,6 +48,17 @@ contract ReferralListTest is Test {
         rl.allowAffiliate(signature);
     }
 
+    function testAllowAffiliateAlreadyExists() public {
+        bytes4 selector = bytes4(keccak256("AffiliateAlreadyExists()"));
+        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        vm.startPrank(USER);
+        rl.allowAffiliate(signature);
+        vm.expectRevert(selector);
+        rl.allowAffiliate(signature);
+    }
+
     function testSuccesfulAirdrop() public {
         for (uint256 i = 0; i < 500; i++) {
             addresses[i] = address(uint160(i + 1));
@@ -133,6 +144,14 @@ contract ReferralListTest is Test {
         assertEq(rl.rewardToken(), token);
     }
 
+    function testSetRewardTokenNotAdmin() public {
+        bytes4 selector = bytes4(keccak256("Unauthorized()"));
+        vm.startPrank(makeAddr("kaker"));
+        address token = makeAddr("token");
+        vm.expectRevert(selector);
+        rl.setRewardToken(token);
+    }
+
     function testSetAffiliateComission(uint256 tierNumber, uint48 comission) public {
         tierNumber = tierNumber % 2;
         IReferralList.Tier tier = IReferralList.Tier(tierNumber);
@@ -143,6 +162,13 @@ contract ReferralListTest is Test {
         assertEq(rl.tierAffiliateComission(tier), comission);
     }
 
+    function testSetAffiliateComissionNotAdmin() public {
+        bytes4 selector = bytes4(keccak256("Unauthorized()"));
+        vm.startPrank(makeAddr("kaker"));
+        vm.expectRevert(selector);
+        rl.setAffiliateComission(IReferralList.Tier.AFFILIATE, 0);
+    }
+
     function testSetTraderDiscount(uint256 tierNumber, uint48 discount) public {
         tierNumber = tierNumber % 2;
         IReferralList.Tier tier = IReferralList.Tier(tierNumber);
@@ -151,5 +177,12 @@ contract ReferralListTest is Test {
         emit IReferralList.SetTraderDiscount(tier, discount);
         rl.setTraderDiscount(tier, discount);
         assertEq(rl.tierTraderDiscount(tier), discount);
+    }
+
+    function testSetTraderDiscountNotAdmin() public {
+        bytes4 selector = bytes4(keccak256("Unauthorized()"));
+        vm.startPrank(makeAddr("kaker"));
+        vm.expectRevert(selector);
+        rl.setTraderDiscount(IReferralList.Tier.AFFILIATE, 0);
     }
 }
