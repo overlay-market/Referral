@@ -6,12 +6,17 @@ import {ReferralList} from "src/ReferralList.sol";
 import {IReferralList} from "src/IReferralList.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ECDSA} from "solady/src/utils/ECDSA.sol";
 
 contract ReferralListTest is Test {
+    using ECDSA for bytes32;
+
     IERC20 private OVL = IERC20(vm.envAddress("OV_CONTRACT"));
     address private OWNER = makeAddr("owner");
     address private AIRDROPPER = makeAddr("airdropper");
-    address private VERIFIER = makeAddr("verifier");
+    uint256 private VERIFIER_PRIVATE_KEY = 0x0303456;
+    address private VERIFIER = vm.addr(VERIFIER_PRIVATE_KEY);
+    address private USER = makeAddr("user");
     ReferralList rl;
 
     address[] addresses = new address[](500);
@@ -23,6 +28,14 @@ contract ReferralListTest is Test {
         rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
         rl.initialize(OWNER, AIRDROPPER, address(OVL), VERIFIER);
         deal(address(OVL), AIRDROPPER, 5000 ether);
+    }
+
+    function testAllowAffiliate() public {
+        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        vm.startPrank(USER);
+        rl.allowAffiliate(signature);
     }
 
     function testSuccesfulAirdrop() public {

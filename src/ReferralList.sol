@@ -44,9 +44,10 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         emit AddAffiliate(msg.sender, _user);
     }
 
-    function allowAffiliates(string calldata message, bytes calldata signature) public onlyRoles(ROLE_ADMIN) {
+    function allowAffiliate(bytes calldata signature) public {
         address affiliate = msg.sender;
-        bytes32 signedMessageHash = keccak256(abi.encode(message)).toEthSignedMessageHash();
+        bytes32 signedMessageHash =
+            keccak256(abi.encodePacked(affiliate, address(this), block.chainid)).toEthSignedMessageHash();
         if (signedMessageHash.recover(signature) != verifyingAddress) revert InvalidSignature();
         if (userTier[affiliate] == Tier.AFFILIATE) revert AffiliateAlreadyExists();
         userTier[affiliate] = Tier.AFFILIATE;
