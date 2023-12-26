@@ -6,8 +6,11 @@ import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {IReferralList} from "src/IReferralList.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ECDSA} from "solady/src/utils/ECDSA.sol";
 
 contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferralList {
+    using ECDSA for bytes32;
+
     uint256 internal constant ROLE_ADMIN = 1 << 0;
     uint256 internal constant ROLE_AIRDROPPER = 1 << 1;
 
@@ -17,36 +20,37 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     mapping(Tier => uint48) public tierTraderDiscount;
 
     address public rewardToken;
+    address public verifyingAddress;
 
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(address owner_, address _airdropper, address _rewardToken) public initializer {
+    function initialize(address owner_, address _airdropper, address _rewardToken, address _verifyingAddress)
+        public
+        initializer
+    {
         _initializeOwner(owner_);
         grantRoles(_airdropper, 3);
         _setRewardToken(_rewardToken);
+        _setVerifyingAddress(_verifyingAddress);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    function addAffiliate(address _user) public {
-        if (userTier[_user] == Tier.AFFILIATE) revert AffiliateNotAllowed();
+    function addAffiliateOrKOL(address _user) public {
+        if (userTier[_user] != Tier.AFFILIATE) revert AffiliateNotAllowed();
         referrals[msg.sender] = _user;
         emit AddAffiliate(msg.sender, _user);
     }
 
-    function addKOL(address _user) public {
-        if (userTier[_user] == Tier.KOL) revert AffiliateNotAllowed();
-        referrals[msg.sender] = _user;
-        emit AddAffiliate(msg.sender, _user);
-    }
-
-    // TODO: Modify to use signature
-    function allowAffiliates(address _affiliate) public onlyRoles(ROLE_ADMIN) {
-        if (userTier[_affiliate] == Tier.AFFILIATE) revert AffiliateAlreadyExists();
-        userTier[_affiliate] = Tier.AFFILIATE;
-        emit AllowAffiliate(_affiliate);
+    function allowAffiliates(string calldata message, bytes calldata signature) public onlyRoles(ROLE_ADMIN) {
+        address affiliate = msg.sender;
+        bytes32 signedMessageHash = keccak256(abi.encode(message)).toEthSignedMessageHash();
+        if (signedMessageHash.recover(signature) != verifyingAddress) revert InvalidSignature();
+        if (userTier[affiliate] == Tier.AFFILIATE) revert AffiliateAlreadyExists();
+        userTier[affiliate] = Tier.AFFILIATE;
+        emit AllowAffiliate(affiliate);
     }
 
     function allowKOL(address _KOL) public onlyRoles(ROLE_ADMIN) {
@@ -78,6 +82,15 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     function _setRewardToken(address _rewardToken) internal {
         rewardToken = _rewardToken;
         emit SetRewardToken(_rewardToken);
+    }
+
+    function setVerifyingAddress(address _verifyingAddress) public onlyRoles(ROLE_ADMIN) {
+        _setVerifyingAddress(_verifyingAddress);
+    }
+
+    function _setVerifyingAddress(address _verifyingAddress) internal {
+        verifyingAddress = _verifyingAddress;
+        emit SetVerifyingAddress(_verifyingAddress);
     }
 
     function setAffiliateComission(Tier _tier, uint48 _affiliateComission) public onlyRoles(ROLE_ADMIN) {

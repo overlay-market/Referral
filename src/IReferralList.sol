@@ -10,6 +10,7 @@ interface IReferralList {
 
     error AffiliateAlreadyExists();
     error AffiliateNotAllowed();
+    error InvalidSignature();
     error LengthMismatch();
 
     event AllowAffiliate(address affiliates);
@@ -17,6 +18,7 @@ interface IReferralList {
     event AddAffiliate(address trader, address affiliate);
     event Airdrop();
     event SetRewardToken(address rewardToken);
+    event SetVerifyingAddress(address verifyingAddress);
     event SetAffiliateComission(Tier tier, uint48 affiliateComission);
     event SetTraderDiscount(Tier tier, uint48 traderDiscount);
 }

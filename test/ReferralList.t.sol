@@ -11,6 +11,7 @@ contract ReferralListTest is Test {
     IERC20 private OVL = IERC20(vm.envAddress("OV_CONTRACT"));
     address private OWNER = makeAddr("owner");
     address private AIRDROPPER = makeAddr("airdropper");
+    address private VERIFIER = makeAddr("verifier");
     ReferralList rl;
 
     address[] addresses = new address[](500);
@@ -20,7 +21,7 @@ contract ReferralListTest is Test {
         vm.createSelectFork(vm.envString("MAINNET_RPC"), 15_312_2295);
         vm.startPrank(OWNER);
         rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
-        rl.initialize(OWNER, AIRDROPPER, address(OVL), 1000, 1000);
+        rl.initialize(OWNER, AIRDROPPER, address(OVL), VERIFIER);
         deal(address(OVL), AIRDROPPER, 5000 ether);
     }
 
@@ -97,21 +98,7 @@ contract ReferralListTest is Test {
         bytes4 selector = bytes4(keccak256("AffiliateNotAllowed()"));
         address affiliate = makeAddr("affiliate");
         vm.expectRevert(selector);
-        rl.addAffiliate(affiliate);
-    }
-
-    function testAllowAffiliates() public {
-        vm.startPrank(AIRDROPPER);
-        address[] memory affiliates = new address[](2);
-        affiliates[0] = makeAddr("affiliate1");
-        affiliates[1] = makeAddr("affiliate2");
-        vm.expectEmit();
-        emit IReferralList.AllowAffiliates(affiliates);
-        rl.allowAffiliates(affiliates);
-        assertTrue(rl.allowedAffiliates(affiliates[0]));
-        assertTrue(rl.allowedAffiliates(affiliates[1]));
-        rl.addAffiliate(affiliates[0]);
-        assertEq(rl.referrals(AIRDROPPER), affiliates[0]);
+        rl.addAffiliateOrKOL(affiliate);
     }
 
     function testSetRewardToken() public {
@@ -123,19 +110,23 @@ contract ReferralListTest is Test {
         assertEq(rl.rewardToken(), token);
     }
 
-    function testSetAffiliateComission(uint48 comission) public {
+    function testSetAffiliateComission(uint256 tierNumber, uint48 comission) public {
+        tierNumber = tierNumber % 2;
+        IReferralList.Tier tier = IReferralList.Tier(tierNumber);
         vm.startPrank(AIRDROPPER);
         vm.expectEmit();
-        emit IReferralList.SetAffiliateComission(comission);
-        rl.setAffiliateComission(comission);
-        assertEq(rl.affiliateComission(), comission);
+        emit IReferralList.SetAffiliateComission(tier, comission);
+        rl.setAffiliateComission(tier, comission);
+        assertEq(rl.tierAffiliateComission(tier), comission);
     }
 
-    function testSetTraderDiscount(uint48 discount) public {
+    function testSetTraderDiscount(uint256 tierNumber, uint48 discount) public {
+        tierNumber = tierNumber % 2;
+        IReferralList.Tier tier = IReferralList.Tier(tierNumber);
         vm.startPrank(AIRDROPPER);
         vm.expectEmit();
-        emit IReferralList.SetTraderDiscount(discount);
-        rl.setTraderDiscount(discount);
-        assertEq(rl.traderDiscount(), discount);
+        emit IReferralList.SetTraderDiscount(tier, discount);
+        rl.setTraderDiscount(tier, discount);
+        assertEq(rl.tierTraderDiscount(tier), discount);
     }
 }
