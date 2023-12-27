@@ -39,11 +39,28 @@ contract ReferralListTest is Test {
         rl.upgradeToAndCall(newImplementation, "");
     }
 
+    function testUpgradeInvalidAddress() public {
+        vm.expectRevert();
+        rl.upgradeToAndCall(makeAddr("not a contract"), "");
+    }
+
     function testAllowAffiliate() public {
         bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
+        rl.allowAffiliate(signature);
+    }
+
+    function testDowngrade() public {
+        bytes4 selector = bytes4(keccak256("DowngradeNotPossible()"));
+        vm.startPrank(AIRDROPPER);
+        rl.allowKOL(USER);
+        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        vm.startPrank(USER);
+        vm.expectRevert(selector);
         rl.allowAffiliate(signature);
     }
 
@@ -58,13 +75,11 @@ contract ReferralListTest is Test {
     }
 
     function testAllowAffiliateAlreadyExists() public {
-        bytes4 selector = bytes4(keccak256("AffiliateAlreadyExists()"));
         bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
         rl.allowAffiliate(signature);
-        vm.expectRevert(selector);
         rl.allowAffiliate(signature);
     }
 
@@ -171,6 +186,15 @@ contract ReferralListTest is Test {
         address token = makeAddr("token");
         vm.expectRevert(selector);
         rl.setRewardToken(token);
+    }
+
+    function testSetVerifyingAddress() public {
+        vm.startPrank(AIRDROPPER);
+        address verifyingAddress = makeAddr("verifyingAddress");
+        vm.expectEmit();
+        emit IReferralList.SetVerifyingAddress(verifyingAddress);
+        rl.setVerifyingAddress(verifyingAddress);
+        assertEq(rl.verifyingAddress(), verifyingAddress);
     }
 
     function testSetAffiliateComission(uint256 tierNumber, uint48 comission) public {

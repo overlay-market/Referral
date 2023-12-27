@@ -54,7 +54,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         bytes32 signedMessageHash =
             keccak256(abi.encodePacked(affiliate, address(this), block.chainid)).toEthSignedMessageHash();
         if (signedMessageHash.recover(signature) != verifyingAddress) revert InvalidSignature();
-        if (userTier[affiliate] == Tier.AFFILIATE) revert AffiliateAlreadyExists();
+        if (userTier[affiliate] == Tier.KOL) revert DowngradeNotPossible();
         userTier[affiliate] = Tier.AFFILIATE;
         emit AllowAffiliate(affiliate);
     }

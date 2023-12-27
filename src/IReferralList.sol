@@ -10,6 +10,7 @@ interface IReferralList {
 
     error AffiliateAlreadyExists();
     error AffiliateNotAllowed();
+    error DowngradeNotPossible();
     error InvalidSignature();
     error LengthMismatch();
     error ReferrerAlreadySet();
