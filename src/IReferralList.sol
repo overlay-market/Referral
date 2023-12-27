@@ -12,10 +12,11 @@ interface IReferralList {
     error AffiliateNotAllowed();
     error InvalidSignature();
     error LengthMismatch();
+    error ReferrerAlreadySet();
 
     event AllowAffiliate(address affiliates);
     event AllowKOL(address KOL);
-    event AddAffiliate(address trader, address affiliate);
+    event AddAffiliateOrKOL(address trader, address affiliate);
     event Airdrop();
     event SetRewardToken(address rewardToken);
     event SetVerifyingAddress(address verifyingAddress);

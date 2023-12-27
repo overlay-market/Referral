@@ -140,6 +140,18 @@ contract ReferralListTest is Test {
     function testAddNotAllowedReferrer() public {
         bytes4 selector = bytes4(keccak256("AffiliateNotAllowed()"));
         address affiliate = makeAddr("affiliate");
+        vm.startPrank(USER);
+        vm.expectRevert(selector);
+        rl.addAffiliateOrKOL(affiliate);
+    }
+
+    function testAddNotAllowedReferrerTwice() public {
+        bytes4 selector = bytes4(keccak256("ReferrerAlreadySet()"));
+        address affiliate = makeAddr("affiliate");
+        vm.startPrank(AIRDROPPER);
+        rl.allowKOL(affiliate);
+        vm.startPrank(USER);
+        rl.addAffiliateOrKOL(affiliate);
         vm.expectRevert(selector);
         rl.addAffiliateOrKOL(affiliate);
     }

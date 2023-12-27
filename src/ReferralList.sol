@@ -11,8 +11,8 @@ import {ECDSA} from "solady/src/utils/ECDSA.sol";
 contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferralList {
     using ECDSA for bytes32;
 
-    uint256 internal constant ROLE_ADMIN = 1 << 0;
-    uint256 internal constant ROLE_AIRDROPPER = 1 << 1;
+    uint256 internal constant ROLE_ADMIN = 1 << 0; // b01
+    uint256 internal constant ROLE_AIRDROPPER = 1 << 1; // b10
 
     mapping(address trader => address affiliate) public referrals;
     mapping(address affiliate => Tier) public userTier;
@@ -31,7 +31,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         initializer
     {
         _initializeOwner(owner_);
-        grantRoles(_airdropper, 3);
+        grantRoles(_airdropper, 3); // 3 = b11 = ROLE_ADMIN | ROLE_AIRDROPPER
         _setRewardToken(_rewardToken);
         _setVerifyingAddress(_verifyingAddress);
     }
@@ -39,9 +39,14 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function addAffiliateOrKOL(address _user) public {
-        if (userTier[_user] != Tier.AFFILIATE) revert AffiliateNotAllowed();
+        if (userTier[_user] != Tier.AFFILIATE && userTier[_user] != Tier.KOL) {
+            revert AffiliateNotAllowed();
+        }
+        if (referrals[msg.sender] != address(0)) {
+            revert ReferrerAlreadySet();
+        }
         referrals[msg.sender] = _user;
-        emit AddAffiliate(msg.sender, _user);
+        emit AddAffiliateOrKOL(msg.sender, _user);
     }
 
     function allowAffiliate(bytes calldata signature) public {
