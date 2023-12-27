@@ -11,6 +11,8 @@ import {ECDSA} from "solady/src/utils/ECDSA.sol";
 contract ReferralListTest is Test {
     using ECDSA for bytes32;
 
+    event Upgraded(address indexed implementation);
+
     IERC20 private OVL = IERC20(vm.envAddress("OV_CONTRACT"));
     address private OWNER = makeAddr("owner");
     address private AIRDROPPER = makeAddr("airdropper");
@@ -28,6 +30,13 @@ contract ReferralListTest is Test {
         rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
         rl.initialize(OWNER, AIRDROPPER, address(OVL), VERIFIER);
         deal(address(OVL), AIRDROPPER, 5000 ether);
+    }
+
+    function testUpgrade() public {
+        address newImplementation = address(new ReferralList());
+        vm.expectEmit();
+        emit Upgraded(newImplementation);
+        rl.upgradeToAndCall(newImplementation, "");
     }
 
     function testAllowAffiliate() public {
