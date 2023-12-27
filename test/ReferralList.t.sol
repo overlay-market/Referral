@@ -52,6 +52,17 @@ contract ReferralListTest is Test {
         rl.allowAffiliate(signature);
     }
 
+    function testAllowKOL() public {
+        bytes4 selector = bytes4(keccak256("AffiliateAlreadyExists()"));
+        vm.startPrank(AIRDROPPER);
+        vm.expectEmit();
+        emit IReferralList.AllowKOL(USER);
+        rl.allowKOL(USER);
+
+        vm.expectRevert(selector);
+        rl.allowKOL(USER);
+    }
+
     function testDowngrade() public {
         bytes4 selector = bytes4(keccak256("DowngradeNotPossible()"));
         vm.startPrank(AIRDROPPER);
@@ -97,6 +108,28 @@ contract ReferralListTest is Test {
         emit IReferralList.Airdrop();
         rl.airdropERC20(addresses, amounts, 5000 ether);
         assertEq(OVL.balanceOf(AIRDROPPER), 0);
+
+        for (uint256 i = 0; i < 10; i++) {
+            assertEq(OVL.balanceOf(address(uint160(i + 1))), 10 ether);
+        }
+    }
+
+    function testSuccesfulAirdropExtraBalance() public {
+        for (uint256 i = 0; i < 500; i++) {
+            addresses[i] = address(uint160(i + 1));
+            amounts[i] = 10 ether;
+        }
+
+        deal(address(OVL), AIRDROPPER, 6000 ether);
+
+        vm.startPrank(AIRDROPPER);
+
+        OVL.approve(address(rl), 6000 ether);
+
+        vm.expectEmit();
+        emit IReferralList.Airdrop();
+        rl.airdropERC20(addresses, amounts, 6000 ether);
+        assertEq(OVL.balanceOf(AIRDROPPER), 1000 ether);
 
         for (uint256 i = 0; i < 10; i++) {
             assertEq(OVL.balanceOf(address(uint160(i + 1))), 10 ether);
@@ -162,13 +195,26 @@ contract ReferralListTest is Test {
 
     function testAddNotAllowedReferrerTwice() public {
         bytes4 selector = bytes4(keccak256("ReferrerAlreadySet()"));
+        address affiliate2 = makeAddr("user2");
+        bytes32 msgHash = keccak256(abi.encodePacked(affiliate2, address(rl), block.chainid)).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        vm.startPrank(affiliate2);
+        rl.allowAffiliate(signature);
+
         address affiliate = makeAddr("affiliate");
         vm.startPrank(AIRDROPPER);
         rl.allowKOL(affiliate);
         vm.startPrank(USER);
+        vm.expectEmit();
+        emit IReferralList.AddAffiliateOrKOL(USER, affiliate);
         rl.addAffiliateOrKOL(affiliate);
+
         vm.expectRevert(selector);
         rl.addAffiliateOrKOL(affiliate);
+
+        vm.expectRevert(selector);
+        rl.addAffiliateOrKOL(affiliate2);
     }
 
     function testSetRewardToken() public {
