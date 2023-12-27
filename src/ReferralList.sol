@@ -31,7 +31,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         initializer
     {
         _initializeOwner(owner_);
-        grantRoles(_airdropper, 3); // 3 = b11 = ROLE_ADMIN | ROLE_AIRDROPPER
+        _grantRoles(_airdropper, ROLE_ADMIN | ROLE_AIRDROPPER); // b11
         _setRewardToken(_rewardToken);
         _setVerifyingAddress(_verifyingAddress);
     }
@@ -71,12 +71,16 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     {
         uint256 addressesLength = _addresses.length;
         if (addressesLength != _amounts.length) revert LengthMismatch();
-        address _token = rewardToken;
 
-        IERC20(_token).transferFrom(msg.sender, address(this), _totalAmount);
+        IERC20 _token = IERC20(rewardToken);
+        _token.transferFrom(msg.sender, address(this), _totalAmount);
+
         for (uint256 i = 0; i < addressesLength; i++) {
-            IERC20(_token).transfer(_addresses[i], _amounts[i]);
+            _token.transfer(_addresses[i], _amounts[i]);
+            _totalAmount -= _amounts[i];
         }
+
+        if (_totalAmount > 0) _token.transfer(msg.sender, _totalAmount);
 
         emit Airdrop();
     }
