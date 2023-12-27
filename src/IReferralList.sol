@@ -15,7 +15,7 @@ interface IReferralList {
     error LengthMismatch();
     error ReferrerAlreadySet();
 
-    event AllowAffiliate(address affiliates);
+    event AllowAffiliate(address affiliate);
     event AllowKOL(address KOL);
     event AddAffiliateOrKOL(address trader, address affiliate);
     event Airdrop();
