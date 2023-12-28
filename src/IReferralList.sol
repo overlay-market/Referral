@@ -18,7 +18,8 @@ interface IReferralList {
     event AllowAffiliate(address affiliate);
     event AllowKOL(address KOL);
     event AddAffiliateOrKOL(address trader, address affiliate);
-    event Airdrop();
+    event NewClaimingPeriod(uint256 indexed period, bytes32 merkleRoot, uint256 totalRewards);
+    event ClaimRewards(address indexed to, uint256 amount);
     event SetRewardToken(address rewardToken);
     event SetVerifyingAddress(address verifyingAddress);
     event SetAffiliateComission(Tier tier, uint48 affiliateComission);

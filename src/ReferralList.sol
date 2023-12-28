@@ -7,6 +7,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/prox
 import {IReferralList} from "src/IReferralList.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ECDSA} from "solady/src/utils/ECDSA.sol";
+import {ReferralClaim} from "src/ReferralClaim.sol";
 
 contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferralList {
     using ECDSA for bytes32;
@@ -22,6 +23,8 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     address public rewardToken;
     address public verifyingAddress;
 
+    ReferralClaim public referralClaim;
+
     constructor() {
         _disableInitializers();
     }
@@ -34,6 +37,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         _grantRoles(_airdropper, ROLE_ADMIN | ROLE_AIRDROPPER); // b11
         _setRewardToken(_rewardToken);
         _setVerifyingAddress(_verifyingAddress);
+        referralClaim = new ReferralClaim(bytes32(0), _rewardToken);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -65,24 +69,20 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         emit AllowKOL(_KOL);
     }
 
-    function airdropERC20(address[] calldata _addresses, uint256[] calldata _amounts, uint256 _totalAmount)
-        external
-        onlyRoles(ROLE_AIRDROPPER)
-    {
-        uint256 addressesLength = _addresses.length;
-        if (addressesLength != _amounts.length) revert LengthMismatch();
+    function claimRewards(address to, uint256 amount, bytes32[] calldata proof) external {
+        referralClaim.claim(to, amount, proof);
+        emit ClaimRewards(to, amount);
+    }
 
-        IERC20 _token = IERC20(rewardToken);
-        _token.transferFrom(msg.sender, address(this), _totalAmount);
+    function initClaimPeriod(bytes32 _merkleRoot, uint256 totalRewards) public onlyRoles(ROLE_AIRDROPPER) {
+        IERC20 token = IERC20(rewardToken);
 
-        for (uint256 i = 0; i < addressesLength; i++) {
-            _token.transfer(_addresses[i], _amounts[i]);
-            _totalAmount -= _amounts[i];
-        }
+        referralClaim.setMerkleRoot(_merkleRoot, block.timestamp);
 
-        if (_totalAmount > 0) _token.transfer(msg.sender, _totalAmount);
+        uint256 missingRewards = totalRewards - token.balanceOf(address(referralClaim));
+        token.transferFrom(msg.sender, address(referralClaim), missingRewards);
 
-        emit Airdrop();
+        emit NewClaimingPeriod(block.timestamp, _merkleRoot, totalRewards);
     }
 
     function setRewardToken(address _rewardToken) public onlyRoles(ROLE_ADMIN) {
