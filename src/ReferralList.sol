@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import {OwnableRoles} from "solady/src/auth/OwnableRoles.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {IReferralList} from "src/IReferralList.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ECDSA} from "solady/src/utils/ECDSA.sol";
 import {ReferralClaim} from "src/ReferralClaim.sol";
 

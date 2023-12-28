@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {ReferralList} from "src/ReferralList.sol";
 import {IReferralList} from "src/IReferralList.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ECDSA} from "solady/src/utils/ECDSA.sol";
 
@@ -23,6 +23,11 @@ contract ReferralListTest is Test {
 
     address[] addresses = new address[](500);
     uint256[] amounts = new uint256[](500);
+
+    event SetRewardToken(address rewardToken);
+    event SetVerifyingAddress(address verifyingAddress);
+    event SetAffiliateComission(IReferralList.Tier tier, uint48 affiliateComission);
+    event SetTraderDiscount(IReferralList.Tier tier, uint48 traderDiscount);
 
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC"), 15_312_2295);
@@ -106,7 +111,7 @@ contract ReferralListTest is Test {
         vm.startPrank(AIRDROPPER);
         address token = makeAddr("token");
         vm.expectEmit();
-        emit IReferralList.SetRewardToken(token);
+        emit SetRewardToken(token);
         rl.setRewardToken(token);
         assertEq(rl.rewardToken(), token);
     }
@@ -123,7 +128,7 @@ contract ReferralListTest is Test {
         vm.startPrank(AIRDROPPER);
         address verifyingAddress = makeAddr("verifyingAddress");
         vm.expectEmit();
-        emit IReferralList.SetVerifyingAddress(verifyingAddress);
+        emit SetVerifyingAddress(verifyingAddress);
         rl.setVerifyingAddress(verifyingAddress);
         assertEq(rl.verifyingAddress(), verifyingAddress);
     }
@@ -133,7 +138,7 @@ contract ReferralListTest is Test {
         IReferralList.Tier tier = IReferralList.Tier(tierNumber);
         vm.startPrank(AIRDROPPER);
         vm.expectEmit();
-        emit IReferralList.SetAffiliateComission(tier, comission);
+        emit SetAffiliateComission(tier, comission);
         rl.setAffiliateComission(tier, comission);
         assertEq(rl.tierAffiliateComission(tier), comission);
     }
@@ -150,7 +155,7 @@ contract ReferralListTest is Test {
         IReferralList.Tier tier = IReferralList.Tier(tierNumber);
         vm.startPrank(AIRDROPPER);
         vm.expectEmit();
-        emit IReferralList.SetTraderDiscount(tier, discount);
+        emit SetTraderDiscount(tier, discount);
         rl.setTraderDiscount(tier, discount);
         assertEq(rl.tierTraderDiscount(tier), discount);
     }

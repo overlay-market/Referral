@@ -10,7 +10,5 @@ out/
 # Docs
 docs/
 
-server/
-
 # Dotenv file
 .env
