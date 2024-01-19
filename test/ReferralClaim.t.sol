@@ -36,20 +36,20 @@ contract ReferralClaimTest is Test {
 
     function test_initClaimPeriod() public {
         vm.prank(AIRDROPPER);
-        referralList.initClaimPeriod(merkleRoot, 100 ether);
+        referralList.initClaimPeriod(merkleRoot, 100 ether, block.timestamp);
         assertEq(referralList.referralClaim().merkleRoot(), merkleRoot);
-        assertEq(referralList.referralClaim().currentPeriod(), block.timestamp);
+        assertEq(referralList.referralClaim().lastRewardUpdate(), block.timestamp);
         assertEq(ovl.balanceOf(address(referralList.referralClaim())), 100 ether);
     }
 
     function test_initClaimPeriod_notAirdropper() public {
         vm.expectRevert(bytes4(keccak256("Unauthorized()")));
-        referralList.initClaimPeriod(merkleRoot, 100 ether);
+        referralList.initClaimPeriod(merkleRoot, 100 ether, block.timestamp);
     }
 
     function test_claimRewards() public {
         vm.prank(AIRDROPPER);
-        referralList.initClaimPeriod(merkleRoot, 100 ether);
+        referralList.initClaimPeriod(merkleRoot, 100 ether, block.timestamp);
 
         vm.startPrank(alice);
         referralList.claimRewards(alice, 100 ether, proof);
@@ -62,7 +62,7 @@ contract ReferralClaimTest is Test {
 
     function test_claimRewards_notInMerkle() public {
         vm.prank(AIRDROPPER);
-        referralList.initClaimPeriod(merkleRoot, 100 ether);
+        referralList.initClaimPeriod(merkleRoot, 100 ether, block.timestamp);
 
         vm.prank(alice);
         vm.expectRevert(bytes4(keccak256("NotInMerkle()")));
@@ -75,7 +75,7 @@ contract ReferralClaimTest is Test {
 
     function test_claimRewards_multiplePeriods() public {
         vm.prank(AIRDROPPER);
-        referralList.initClaimPeriod(merkleRoot, 100 ether);
+        referralList.initClaimPeriod(merkleRoot, 100 ether, block.timestamp);
 
         vm.prank(alice);
         referralList.claimRewards(alice, 100 ether, proof);
@@ -85,7 +85,7 @@ contract ReferralClaimTest is Test {
         vm.warp(block.timestamp + 1 weeks);
 
         vm.prank(AIRDROPPER);
-        referralList.initClaimPeriod(merkleRoot, 100 ether);
+        referralList.initClaimPeriod(merkleRoot, 100 ether, block.timestamp);
 
         vm.prank(alice);
         referralList.claimRewards(alice, 100 ether, proof);

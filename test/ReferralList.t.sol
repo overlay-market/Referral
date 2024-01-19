@@ -24,6 +24,8 @@ contract ReferralListTest is Test {
     address[] addresses = new address[](500);
     uint256[] amounts = new uint256[](500);
 
+    event AllowKOL(address KOL);
+    event AddAffiliateOrKOL(address trader, address affiliate);
     event SetRewardToken(address rewardToken);
     event SetVerifyingAddress(address verifyingAddress);
     event SetAffiliateComission(IReferralList.Tier tier, uint48 affiliateComission);
@@ -61,7 +63,7 @@ contract ReferralListTest is Test {
         bytes4 selector = bytes4(keccak256("AffiliateAlreadyExists()"));
         vm.startPrank(AIRDROPPER);
         vm.expectEmit();
-        emit IReferralList.AllowKOL(USER);
+        emit AllowKOL(USER);
         rl.allowKOL(USER);
 
         vm.expectRevert(selector);
@@ -99,97 +101,6 @@ contract ReferralListTest is Test {
         rl.allowAffiliate(signature);
     }
 
-    function testSuccesfulAirdrop() public {
-        for (uint256 i = 0; i < 500; i++) {
-            addresses[i] = address(uint160(i + 1));
-            amounts[i] = 10 ether;
-        }
-
-        vm.startPrank(AIRDROPPER);
-
-        OVL.approve(address(rl), 5000 ether);
-
-        vm.expectEmit();
-        emit IReferralList.Airdrop();
-        rl.airdropERC20(addresses, amounts, 5000 ether);
-        assertEq(OVL.balanceOf(AIRDROPPER), 0);
-
-        for (uint256 i = 0; i < 10; i++) {
-            assertEq(OVL.balanceOf(address(uint160(i + 1))), 10 ether);
-        }
-    }
-
-    function testSuccesfulAirdropExtraBalance() public {
-        for (uint256 i = 0; i < 500; i++) {
-            addresses[i] = address(uint160(i + 1));
-            amounts[i] = 10 ether;
-        }
-
-        deal(address(OVL), AIRDROPPER, 6000 ether);
-
-        vm.startPrank(AIRDROPPER);
-
-        OVL.approve(address(rl), 6000 ether);
-
-        vm.expectEmit();
-        emit IReferralList.Airdrop();
-        rl.airdropERC20(addresses, amounts, 6000 ether);
-        assertEq(OVL.balanceOf(AIRDROPPER), 1000 ether);
-
-        for (uint256 i = 0; i < 10; i++) {
-            assertEq(OVL.balanceOf(address(uint160(i + 1))), 10 ether);
-        }
-    }
-
-    function testLengthMismatch() public {
-        bytes4 selector = bytes4(keccak256("LengthMismatch()"));
-        address[] memory addresses2 = new address[](2);
-        uint256[] memory amounts2 = new uint256[](1);
-
-        addresses2[0] = address(uint160(1));
-        addresses2[1] = address(uint160(2));
-        amounts2[0] = 10 ether;
-
-        vm.startPrank(AIRDROPPER);
-
-        OVL.approve(address(rl), 100 ether);
-
-        vm.expectRevert(selector);
-
-        rl.airdropERC20(addresses2, amounts2, 100 ether);
-    }
-
-    function testNotEnoughApproval() public {
-        for (uint256 i = 0; i < 10; i++) {
-            addresses[i] = address(uint160(i + 1));
-            amounts[i] = 10 ether;
-        }
-
-        vm.startPrank(AIRDROPPER);
-
-        OVL.approve(address(rl), 50 ether);
-
-        vm.expectRevert("ERC20: insufficient allowance");
-
-        rl.airdropERC20(addresses, amounts, 100 ether);
-    }
-
-    function testNotAirdropper() public {
-        bytes4 selector = bytes4(keccak256("Unauthorized()"));
-        for (uint256 i = 0; i < 10; i++) {
-            addresses[i] = address(uint160(i + 1));
-            amounts[i] = 10 ether;
-        }
-
-        vm.startPrank(OWNER);
-
-        OVL.approve(address(rl), 100 ether);
-
-        vm.expectRevert(selector);
-
-        rl.airdropERC20(addresses, amounts, 100 ether);
-    }
-
     function testAddNotAllowedReferrer() public {
         bytes4 selector = bytes4(keccak256("AffiliateNotAllowed()"));
         address affiliate = makeAddr("affiliate");
@@ -212,7 +123,7 @@ contract ReferralListTest is Test {
         rl.allowKOL(affiliate);
         vm.startPrank(USER);
         vm.expectEmit();
-        emit IReferralList.AddAffiliateOrKOL(USER, affiliate);
+        emit AddAffiliateOrKOL(USER, affiliate);
         rl.addAffiliateOrKOL(affiliate);
 
         vm.expectRevert(selector);
