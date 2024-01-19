@@ -5,12 +5,21 @@ import { ethers } from "ethers"
 const SUBGRAPH = "https://api.studio.thegraph.com/query/49419/overlay-arb-sepolia/version/latest"
 
 const main = async () => {
-    const airdrop = await fetchReferralRewards()
+    const {
+      rewardsPending: airdrop,
+      lastBlockTimestamp,
+      totalRewards
+    } = await fetchReferralRewards()
 
     fs.writeFileSync(
         `./config.json`,
         // note: `decimals = 0` since we are getting the raw number of tokens from the subgraph
-        JSON.stringify({decimals: 0, airdrop}, null, 2)
+        JSON.stringify({
+          lastBlockTimestamp,
+          decimals: 0,
+          totalRewards,
+          airdrop
+        }, null, 2)
     )
 
     console.log(`Generated config.json`)
@@ -18,6 +27,7 @@ const main = async () => {
 
 const fetchReferralRewards = async () => {
     let lastId = ethers.constants.AddressZero
+    let lastBlockTimestamp = 0
 
     const rewardsPending: Record<string, string> = {}
     let res: {owner: {id: string}, totalRewardsPending: string, id: string}[] = []
@@ -25,22 +35,29 @@ const fetchReferralRewards = async () => {
     do {
         const query = `query GetReferralRewards {
             referralPositions(
-                orderBy: id
-                orderDirection: asc
-                where: {totalRewardsPending_gt: "0", id_gt: "${lastId}"}
-                first: 1000
-              ) {
+              orderBy: id
+              orderDirection: asc
+              where: {totalRewardsPending_gt: "0", id_gt: "${lastId}"}
+              first: 1000
+            ) {
+              id
+              totalRewardsPending
+              owner {
                 id
-                totalRewardsPending
-                owner {
-                  id
-                }
               }
+            }
+            _meta {
+              block {
+                timestamp
+              }
+            }
         }`
     
         const variables = {}
+        const data = (await axios.post(SUBGRAPH, { query, variables })).data.data
     
-        res = (await axios.post(SUBGRAPH, { query, variables })).data.data.referralPositions
+        res = data.referralPositions
+        lastBlockTimestamp = data._meta.block.timestamp
 
         res.forEach(({owner, totalRewardsPending}) => rewardsPending[owner.id] = totalRewardsPending)
 
@@ -48,7 +65,16 @@ const fetchReferralRewards = async () => {
         lastId = res[res.length - 1].id
     } while (res.length === 1000)
 
-    return rewardsPending
+    const totalRewards: bigint = Object.values(rewardsPending).reduce(
+      (sum, value) => sum + BigInt(value),
+      BigInt(0)
+    )
+
+    return {
+      rewardsPending,
+      lastBlockTimestamp,
+      totalRewards: totalRewards.toString()
+    }
 }
 
 main()
