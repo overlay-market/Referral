@@ -13,11 +13,11 @@ contract ReferralClaim is Ownable {
     /// @notice Contract address of airdropped token
     IERC20 public token;
 
-    /// @notice Timestamp in which the current period started
-    uint256 public currentPeriod;
+    /// @notice Timestamp in which the merkle root was updated
+    uint256 public lastRewardUpdate;
 
-    /// @notice Track how many tokens have been claimed by each address, for each period
-    mapping(address account => mapping(uint256 startTime => bool)) public hasClaimed;
+    /// @notice Timestamp in which `account` last claimed rewards
+    mapping(address account => uint256) public lastClaim;
 
 
     /// @notice Thrown if address has already claimed
@@ -40,20 +40,20 @@ contract ReferralClaim is Ownable {
     /// @param amount of tokens owed to claimee
     /// @param proof merkle proof to prove address and amount are in tree
     function claim(address to, uint256 amount, bytes32[] calldata proof) external onlyOwner {
-        if (hasClaimed[to][currentPeriod]) revert AlreadyClaimed();
+        if (lastClaim[to] >= lastRewardUpdate) revert AlreadyClaimed();
 
         bytes32 leaf = keccak256(abi.encodePacked(to, amount));
         bool isValidLeaf = MerkleProof.verifyCalldata(proof, merkleRoot, leaf);
         if (!isValidLeaf) revert NotInMerkle();
 
-        hasClaimed[to][currentPeriod] = true;
+        lastClaim[to] = block.timestamp;
 
         token.transfer(to, amount);
     }
 
-    function setMerkleRoot(bytes32 _merkleRoot, uint256 _currentPeriod) external onlyOwner {
+    function setMerkleRoot(bytes32 _merkleRoot, uint256 _lastRewardUpdate) external onlyOwner {
         merkleRoot = _merkleRoot;
-        currentPeriod = _currentPeriod;
+        lastRewardUpdate = _lastRewardUpdate;
     }
 
     function setToken(address _token) external onlyOwner {

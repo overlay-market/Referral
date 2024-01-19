@@ -74,15 +74,19 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         emit ClaimRewards(to, amount);
     }
 
-    function initClaimPeriod(bytes32 _merkleRoot, uint256 totalRewards) public onlyRoles(ROLE_AIRDROPPER) {
+    function initClaimPeriod(
+        bytes32 merkleRoot,
+        uint256 totalRewards,
+        uint256 lastUpdateTimestamp
+    ) public onlyRoles(ROLE_AIRDROPPER) {
         IERC20 token = IERC20(rewardToken);
 
-        referralClaim.setMerkleRoot(_merkleRoot, block.timestamp);
+        referralClaim.setMerkleRoot(merkleRoot, lastUpdateTimestamp);
 
         uint256 missingRewards = totalRewards - token.balanceOf(address(referralClaim));
         token.transferFrom(msg.sender, address(referralClaim), missingRewards);
 
-        emit NewClaimingPeriod(block.timestamp, _merkleRoot, totalRewards);
+        emit NewClaimingPeriod(lastUpdateTimestamp, merkleRoot, totalRewards);
     }
 
     function setRewardToken(address _rewardToken) public onlyRoles(ROLE_ADMIN) {
