@@ -3,12 +3,14 @@
   "version": "0.0.1",
   "author": "Overlay",
   "contributors": [
-    "magnetto90 (https://github.com/magnetto90)"
+    "magnetto90 (https://github.com/magnetto90)",
+    "EperezOk (https://github.com/EperezOk)"
   ],
   "license": "ISC",
   "scripts": {
     "deploy:mainnet": "bash -c 'source .env && forge script Deploy --rpc-url $MAINNET_RPC --broadcast --verify -vvvv'",
     "deploy:sepolia": "bash -c 'source .env && forge script Deploy --rpc-url $SEPOLIA_RPC --broadcast --verify -vvvv'",
+    "updgrade:mainnet": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $MAINNET_RPC --broadcast --verify -vvvv'",
     "upgrade:sepolia": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $SEPOLIA_RPC --broadcast --verify -vvvv'"
   }
 }
