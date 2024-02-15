@@ -7,7 +7,7 @@ export default () => ({
     subgraphUrl: "https://api.studio.thegraph.com/query/49419/overlay-arb-sepolia/version/latest",
     referrals: {
         minTradingVolume: ethers.parseEther("1000"), // 1000 OVL
-        contract: "0x426cB483cad253aa7E514c6C2B76a3c215d9065b",
+        contract: "0x1cee53AB89004b2a9E173edc6F51509f8eB32122",
         chainId: 421614,
     }
 })

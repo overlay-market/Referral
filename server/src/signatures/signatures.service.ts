@@ -5,7 +5,7 @@ import { ethers } from "ethers"
 
 @Injectable()
 export class SignaturesService {
-    constructor(private configService: ConfigService) {}
+    constructor(private configService: ConfigService) { }
 
     async requestSignature(account: string) {
         const subgraphUrl = this.configService.get<string>("subgraphUrl")
@@ -20,17 +20,20 @@ export class SignaturesService {
             }
         }`
         const variables = {}
-    
         const user = (await axios.post(subgraphUrl, { query, variables })).data.data.account
 
         const ovlVolumeTraded = user ? BigInt(user.ovlVolumeTraded) : 0n
 
-        if (ovlVolumeTraded < minTradingVolume) throw new Error("Trading volume is below the minimum")
+        //if (ovlVolumeTraded < minTradingVolume) throw new Error("Trading volume is below the minimum")
 
         const signer = new ethers.Wallet(signingKey)
         // Reference: https://docs.ethers.org/v6/cookbook/signing/
-        const message = ethers.solidityPackedKeccak256(["address", "address", "uint"], [account, contract, chainId])
-        const signature = await signer.signMessage(message)
+        const message = ethers.solidityPackedKeccak256(
+            ["address", "address", "uint"],
+            [account, contract, chainId],
+        )
+
+        const signature = await signer.signMessage(ethers.getBytes(message))
 
         return {
             ovlVolumeTraded: ethers.formatEther(ovlVolumeTraded),
