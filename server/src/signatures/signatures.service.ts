@@ -17,7 +17,7 @@ export class SignaturesService {
         const chainId = this.configService.get<number>("referrals.chainId")
 
         const query = `query GetOvlTotalVolumeTraded {
-            account(id: "${account}") {
+            account(id: "${account.toLocaleLowerCase()}") {
                 ovlVolumeTraded
             }
         }`
