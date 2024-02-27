@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common"
-import { ConfigModule } from "@nestjs/config"
+import { ConfigModule, ConfigService } from "@nestjs/config"
+import { MongooseModule } from "@nestjs/mongoose"
 import { AppController } from "./app.controller"
 import { AppService } from "./app.service"
 import { SignaturesModule } from "./signatures/signatures.module"
@@ -11,6 +12,14 @@ import configuration from "./config/configuration"
         ConfigModule.forRoot({
             load: [configuration],
             isGlobal: true,
+        }),
+        // Reference: https://docs.nestjs.com/techniques/mongodb#async-configuration
+        MongooseModule.forRootAsync({
+            imports: [ConfigModule],
+            useFactory: async (configService: ConfigService) => ({
+              uri: configService.get<string>("mongoUri"),
+            }),
+            inject: [ConfigService],
         }),
         SignaturesModule,
         RewardsModule,

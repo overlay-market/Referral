@@ -4,6 +4,7 @@ import { ethers } from "ethers"
 export default () => ({
     port: parseInt(process.env.PORT) || 3000,
     signingKey: process.env.PRIVATE_KEY,
+    mongoUri: process.env.MONGODB_URI,
     subgraphUrl:
         "https://api.studio.thegraph.com/query/49419/overlay-arb-sepolia/version/latest",
     referrals: {
