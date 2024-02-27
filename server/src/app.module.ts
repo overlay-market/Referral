@@ -11,7 +11,7 @@ import configuration from "./config/configuration"
             load: [configuration],
             isGlobal: true,
         }),
-        SignaturesModule
+        SignaturesModule,
     ],
     controllers: [AppController],
     providers: [AppService],

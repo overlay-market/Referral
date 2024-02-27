@@ -5,7 +5,7 @@ import { ethers } from "ethers"
 
 @Injectable()
 export class SignaturesService {
-    constructor(private configService: ConfigService) { }
+    constructor(private configService: ConfigService) {}
 
     async requestSignature(account: string) {
         const subgraphUrl = this.configService.get<string>("subgraphUrl")

@@ -4,10 +4,11 @@ import { ethers } from "ethers"
 export default () => ({
     port: parseInt(process.env.PORT) || 3000,
     signingKey: process.env.PRIVATE_KEY,
-    subgraphUrl: "https://api.studio.thegraph.com/query/49419/overlay-arb-sepolia/version/latest",
+    subgraphUrl:
+        "https://api.studio.thegraph.com/query/49419/overlay-arb-sepolia/version/latest",
     referrals: {
         minTradingVolume: ethers.parseEther("1000"), // 1000 OVL
         contract: "0x1cee53AB89004b2a9E173edc6F51509f8eB32122",
         chainId: 421614,
-    }
+    },
 })
