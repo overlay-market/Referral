@@ -2,7 +2,7 @@ import axios from "axios"
 import fs from "fs"
 import { ethers } from "ethers"
 
-const SUBGRAPH = "https://api.studio.thegraph.com/query/49419/overlay-arb-sepolia/version/latest"
+const SUBGRAPH = "https://api.thegraph.com/subgraphs/name/overlay-market/overlay-sepolia-test"
 
 const main = async () => {
     const {
