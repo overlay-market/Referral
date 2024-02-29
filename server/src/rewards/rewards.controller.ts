@@ -3,7 +3,9 @@ import {
     Body,
     Controller,
     Param,
-    Put,
+    Patch,
+    HttpCode,
+    HttpStatus,
 } from "@nestjs/common"
 import { RewardsService } from "./rewards.service"
 import { UpdateRewardDto, UpdateRewardParams } from "./dto/update-reward.dto"
@@ -12,13 +14,14 @@ import { UpdateRewardDto, UpdateRewardParams } from "./dto/update-reward.dto"
 export class RewardsController {
     constructor(private readonly rewardsService: RewardsService) {}
 
-    @Put(":wallet")
+    @Patch(":wallet")
+    @HttpCode(HttpStatus.NO_CONTENT)
     async update(
         @Param() params: UpdateRewardParams,
         @Body() updateRewardDto: UpdateRewardDto,
     ) {
         try {
-            return await this.rewardsService.update(
+            await this.rewardsService.update(
                 params.wallet,
                 updateRewardDto,
             )

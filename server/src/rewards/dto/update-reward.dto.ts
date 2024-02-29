@@ -31,7 +31,7 @@ export class UpdateRewardParams {
 export class UpdateRewardDto {
     @IsNotEmpty()
     @IsIn(["referral"])
-    program: string
+    campaign: string
 
     @IsNotEmpty()
     @Min(0)
