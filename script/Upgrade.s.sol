@@ -10,7 +10,7 @@ abstract contract Upgrade is Script {
         ReferralList proxy = ReferralList(vm.envAddress("PROXY_ADDRESS"));
 
         vm.startBroadcast(deployerPrivateKey);
-        proxy.upgradeToAndCall(address(new ReferralList()), "");
+        proxy.upgradeTo(address(new ReferralList()));
         vm.stopBroadcast();
     }
 }

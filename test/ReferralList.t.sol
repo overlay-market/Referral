@@ -43,7 +43,7 @@ contract ReferralListTest is Test {
         address newImplementation = address(new ReferralList());
         vm.expectEmit();
         emit Upgraded(newImplementation);
-        rl.upgradeToAndCall(newImplementation, "");
+        rl.upgradeTo(newImplementation);
     }
 
     function testUpgradeInvalidAddress() public {
@@ -71,7 +71,7 @@ contract ReferralListTest is Test {
     }
 
     function testDowngrade() public {
-        bytes4 selector = bytes4(keccak256("DowngradeNotPossible()"));
+        bytes4 selector = bytes4(keccak256("AffiliateAlreadyExists()"));
         vm.startPrank(AIRDROPPER);
         rl.allowKOL(USER);
         bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
@@ -98,6 +98,7 @@ contract ReferralListTest is Test {
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
         rl.allowAffiliate(signature);
+        vm.expectRevert(bytes4(keccak256("AffiliateAlreadyExists()")));
         rl.allowAffiliate(signature);
     }
 

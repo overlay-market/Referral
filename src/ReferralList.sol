@@ -58,7 +58,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         bytes32 signedMessageHash =
             keccak256(abi.encodePacked(affiliate, address(this), block.chainid)).toEthSignedMessageHash();
         if (signedMessageHash.recover(signature) != verifyingAddress) revert InvalidSignature();
-        if (userTier[affiliate] == Tier.KOL) revert DowngradeNotPossible();
+        if (userTier[affiliate] != Tier.NOT_AFFILIATE) revert AffiliateAlreadyExists();
         userTier[affiliate] = Tier.AFFILIATE;
         emit AllowAffiliate(affiliate);
     }
@@ -74,11 +74,10 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         emit ClaimRewards(to, amount);
     }
 
-    function initClaimPeriod(
-        bytes32 merkleRoot,
-        uint256 totalRewards,
-        uint256 lastUpdateTimestamp
-    ) public onlyRoles(ROLE_AIRDROPPER) {
+    function initClaimPeriod(bytes32 merkleRoot, uint256 totalRewards, uint256 lastUpdateTimestamp)
+        public
+        onlyRoles(ROLE_AIRDROPPER)
+    {
         IERC20 token = IERC20(rewardToken);
 
         referralClaim.setMerkleRoot(merkleRoot, lastUpdateTimestamp);
