@@ -38,8 +38,8 @@ forge verify-contract \
     --num-of-optimizations 200 \
     --watch \
     --etherscan-api-key <api> \
-    --compiler-version v0.8.23 \
-    0xd1d872536A44A3b6af72238fd04822B1C8C38386 \
+    --compiler-version v0.8.19 \
+    0xe0fd9b1a8e56bdb98f96a7a02182070cda0b778c \
     src/ReferralList.sol:ReferralList \
 
 */
