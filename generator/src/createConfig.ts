@@ -4,8 +4,6 @@ import { ethers } from "ethers"
 import "dotenv/config"
 import Generator from "./generator"
 
-const SUBGRAPH = "https://api.thegraph.com/subgraphs/name/overlay-market/overlay-sepolia-test"
-
 const main = async () => {
     const {
       rewardsPending: airdrop,
@@ -83,7 +81,7 @@ const fetchReferralRewards = async () => {
         }`
     
         const variables = {}
-        const data = (await axios.post(SUBGRAPH, { query, variables })).data.data
+        const data = (await axios.post(process.env.SUBGRAPH, { query, variables })).data.data
     
         res = data.referralPositions
         lastBlockTimestamp = data._meta.block.timestamp
