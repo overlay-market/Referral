@@ -1,6 +1,8 @@
 import axios from "axios"
 import fs from "fs"
 import { ethers } from "ethers"
+import "dotenv/config"
+import Generator from "./generator"
 
 const SUBGRAPH = "https://api.thegraph.com/subgraphs/name/overlay-market/overlay-sepolia-test"
 
@@ -11,18 +13,45 @@ const main = async () => {
       totalRewards
     } = await fetchReferralRewards()
 
+    const decimals = 0 // subgraph returns raw number of tokens
+
+    const merkleTree = new Generator(decimals, airdrop)
+    
+    // Update rewards on rewards API
+    for (const [wallet, amount] of Object.entries(airdrop)) {
+      const proof = merkleTree.generateProof(wallet, amount)
+      console.log({wallet, amount, proof})
+
+      try {
+        await axios.patch(process.env.REWARDS_API_URI + wallet, {
+          campaign: "referral",
+          amount: parseFloat(ethers.utils.formatEther(amount)),
+          proof,
+        }, {
+          headers: {
+            Authorization: `Token ${process.env.REWARDS_API_TOKEN}`
+          }
+        })
+      } catch(err) {
+        throw new Error(`Error updating rewards for wallet ${wallet}: ${err.message}`)
+      }
+    }
+
+    console.log("Updated rewards on the database.")
+
+    // Write rewards to disk
     fs.writeFileSync(
-        `./config.json`,
+        "./config.json",
         // note: `decimals = 0` since we are getting the raw number of tokens from the subgraph
         JSON.stringify({
           lastBlockTimestamp,
-          decimals: 0,
+          decimals,
           totalRewards,
           airdrop
         }, null, 2)
     )
 
-    console.log(`Generated config.json`)
+    console.log("Generated config.json.")
 }
 
 const fetchReferralRewards = async () => {
