@@ -23,7 +23,7 @@ const main = async () => {
       try {
         await axios.patch(process.env.REWARDS_API_URI + wallet, {
           campaign: "referral",
-          amount: parseFloat(ethers.utils.formatEther(amount)),
+          amount,
           proof,
         }, {
           headers: {
@@ -86,8 +86,7 @@ const fetchReferralRewards = async () => {
         res = data.referralPositions
         lastBlockTimestamp = data._meta.block.timestamp
 
-        // use the checksummed address as the key
-        res.forEach(({owner, totalRewardsPending}) => rewardsPending[ethers.utils.getAddress(owner.id)] = totalRewardsPending)
+        res.forEach(({owner, totalRewardsPending}) => rewardsPending[owner.id] = totalRewardsPending)
 
         // responses are sorted by id
         lastId = res[res.length - 1].id
