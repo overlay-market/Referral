@@ -86,7 +86,8 @@ const fetchReferralRewards = async () => {
         res = data.referralPositions
         lastBlockTimestamp = data._meta.block.timestamp
 
-        res.forEach(({owner, totalRewardsPending}) => rewardsPending[owner.id] = totalRewardsPending)
+        // use the checksummed address as the key
+        res.forEach(({owner, totalRewardsPending}) => rewardsPending[ethers.utils.getAddress(owner.id)] = totalRewardsPending)
 
         // responses are sorted by id
         lastId = res[res.length - 1].id
