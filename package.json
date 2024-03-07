@@ -10,7 +10,7 @@
   "scripts": {
     "deploy:mainnet": "bash -c 'source .env && forge script Deploy --rpc-url $MAINNET_RPC --broadcast --verify -vvvv'",
     "deploy:sepolia": "bash -c 'source .env && forge script Deploy --rpc-url $SEPOLIA_RPC --broadcast --verify -vvvv'",
-    "updgrade:mainnet": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $MAINNET_RPC --broadcast --verify -vvvv'",
+    "upgrade:mainnet": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $MAINNET_RPC --broadcast --verify -vvvv'",
     "upgrade:sepolia": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $SEPOLIA_RPC --broadcast --verify -vvvv'"
   }
 }
