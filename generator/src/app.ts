@@ -1,5 +1,7 @@
 import fs from "fs"
 import path from "path"
+import { ethers } from "ethers"
+import "dotenv/config"
 import Generator from "./generator"
 
 const configPath: string = path.join(__dirname, "../config.json")
@@ -36,3 +38,17 @@ const totalRewards: string = configData.totalRewards
 // Initialize and call generator
 const generator = new Generator(decimals, airdrop)
 generator.process(lastBlockTimestamp, totalRewards)
+
+// Update the merkle root in the contract
+const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_PROVIDER)
+const abi = ["function initClaimPeriod(bytes32,uint256,uint256)"]
+const signer = new ethers.Wallet(process.env.AIRDROPPER_PK, provider)
+const contract = new ethers.Contract(
+    process.env.REFERRALS_ADDRESS,
+    abi,
+    signer
+)
+// Note: make sure the signer has already given its approval to the Referrals contract
+contract
+    .initClaimPeriod(generator.getRoot(), totalRewards,lastBlockTimestamp)
+    .then((tx: { hash: string }) => console.log("Root pushed to contract. Tx:", tx.hash))
