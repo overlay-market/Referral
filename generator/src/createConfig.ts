@@ -14,6 +14,14 @@ const main = async () => {
     const decimals = 0 // subgraph returns raw number of tokens
 
     const merkleTree = new Generator(decimals, airdrop)
+
+    // Reset rewards on rewards API
+    await axios.delete(process.env.REWARDS_API_URI, {
+      data: { campaign: "referral" },
+      headers: {
+        Authorization: `Token ${process.env.REWARDS_API_TOKEN}`
+      }
+    })
     
     // Update rewards on rewards API
     for (const [wallet, amount] of Object.entries(airdrop)) {
