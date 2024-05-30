@@ -1,30 +1,40 @@
-## Configuration
+# Merkle Airdrop Generator
 
-Create a `.env` file with the following variables, and update the values accordingly:
+This project is a Merkle Airdrop generator for the referral program of the Overlay Protocol. It's based on [our fork](https://github.com/overlay-market/merkle-airdrop) of [this](https://github.com/Anish-Agnihotri/merkle-airdrop-starter) other repository. Check the original repository for more information and context.
 
-```env
-REWARDS_API_TOKEN=<auth_token>
-REWARDS_API_URI=http://localhost:3000/rewards/
-SUBGRAPH=https://api.thegraph.com/subgraphs/name/overlay-market/overlay-sepolia-test
-AIRDROPPER_PK=<private_key>
-RPC_PROVIDER=https://arb-sepolia.g.alchemy.com/v2/<api_key>
-REFERRALS_ADDRESS=0x1cee53ab89004b2a9e173edc6f51509f8eb32122
-```
+## Setup
 
-> The Airdropper needs to give token approval to the contract beforehand.
+1. Make a copy of the `.env.example` file and rename it to `.env`. Update the values accordingly.
 
-## Merkle Tree Creation
+    ```bash
+    cp .env.example .env
+    ```
 
-1. Build the project using:
+2. Make sure the *Airdropper* account set in the `.env` already gave a token approval to the referrals contract beforehand. In the future, this could be added to these scripts so it's done automatically.
+3. Install dependencies:
+
+    ```bash
+    npm install
+    ```
+
+4. Build the project:
+
     ```bash
     npm run build
     ```
-2. Create the `config.json` file with all the wallets and rewards using:
+
+## Merkle Tree Creation
+
+1. Create a `config.json` file with all the wallets and rewards for the current epoch. These rewards will also be pushed to our database through the [Rewards API](https://github.com/overlay-market/rewards-api).
+
     ```bash
     npm run generate:config
     ```
-    > This will also update the rewards in the database.
-3. Create the merkle tree using:
+
+2. Create the merkle tree and push the root to the referrals contract.
+
     ```bash
     npm run generate:merkle
     ```
+
+    This will also save the merkle tree to a file in the `./trees` directory.
