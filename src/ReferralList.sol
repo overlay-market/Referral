@@ -35,9 +35,9 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     {
         _initializeOwner(owner_);
         _grantRoles(_airdropper, ROLE_ADMIN | ROLE_AIRDROPPER); // b11
-        _setRewardToken(_rewardToken);
         _setVerifyingAddress(_verifyingAddress);
         referralClaim = new ReferralClaim(bytes32(0), _rewardToken);
+        _setRewardToken(_rewardToken);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -94,6 +94,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
 
     function _setRewardToken(address _rewardToken) internal {
         rewardToken = _rewardToken;
+        referralClaim.setToken(_rewardToken);
         emit SetRewardToken(_rewardToken);
     }
 
