@@ -6,15 +6,16 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
-    "generate:config": "node dist/createConfig.js",
-    "generate:merkle": "node dist/app.js",
-    "generate:proof": "node dist/createProof.js"
+    "generate:config": "ts-node src/createConfig.ts",
+    "generate:merkle": "ts-node src/app.ts",
+    "generate:proof": "ts-node src/createProof.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.10.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
