@@ -2,13 +2,14 @@
   "name": "generator",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "index.js",
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
     "generate:config": "ts-node src/createConfig.ts",
-    "generate:merkle": "ts-node src/app.ts",
-    "generate:proof": "ts-node src/createProof.ts"
+    "generate:merkle": "ts-node src/updateMerkleRoot.ts",
+    "generate:proof": "ts-node src/createProof.ts",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
