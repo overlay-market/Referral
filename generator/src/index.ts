@@ -18,6 +18,8 @@ async function main() {
     throwErrorAndExit('Missing AIRDROPPER_PK in process.env. Please add.')
   if (!process.env.REFERRALS_ADDRESS)
     throwErrorAndExit('Missing REFERRALS_ADDRESS in process.env. Please add.')
+  if (!process.env.OV_TOKEN_ADDRESS)
+    throwErrorAndExit('Missing OV_TOKEN_ADDRESS in process.env. Please add.')
   if (!process.env.REWARDS_API_URI)
     throwErrorAndExit('Missing REWARDS_API_URI in process.env. Please add.')
   if (!process.env.REWARDS_API_TOKEN)
