@@ -43,6 +43,9 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function addAffiliateOrKOL(address _user) public {
+        if (msg.sender == _user) {
+            revert SelfReferralNotAllowed();
+        }
         if (userTier[_user] != Tier.AFFILIATE && userTier[_user] != Tier.KOL) {
             revert AffiliateNotAllowed();
         }
