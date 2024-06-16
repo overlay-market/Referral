@@ -65,7 +65,7 @@ export default class Generator {
     process(rootCreationTimestamp: number, totalRewards: string): void {
         // Collect and log merkle root
         const merkleRoot: string = this.merkleTree.getHexRoot()
-        console.info(`Generated Merkle root: ${merkleRoot} for t=${rootCreationTimestamp}`)
+        console.info(`\nGenerated Merkle root: ${merkleRoot} for t=${rootCreationTimestamp}`)
         console.log(`Total rewards: ${totalRewards}`)
 
         // Collect and save merkle tree + root
@@ -80,7 +80,7 @@ export default class Generator {
                 tree: this.merkleTree,
             })
         )
-        console.info(`Generated merkle tree and root saved to \`trees/merkle_${rootCreationTimestamp}.json\``)
+        console.info(`\~Generated merkle tree and root saved to \`trees/merkle_${rootCreationTimestamp}.json\``)
     }
 
     generateProof(address: string, amount: string): string[] {
