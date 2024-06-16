@@ -196,4 +196,11 @@ contract ReferralListTest is Test {
         vm.expectRevert(selector);
         referralList.setTraderDiscount(IReferralList.Tier.AFFILIATE, 0);
     }
+
+    function testSelfReferralNotAllowed() public {
+        bytes4 selector = bytes4(keccak256("SelfReferralNotAllowed()"));
+        vm.startPrank(AIRDROPPER);
+        vm.expectRevert(selector);
+        referralList.addAffiliateOrKOL(AIRDROPPER);
+    }
 }
