@@ -25,6 +25,16 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
 
     ReferralClaim public referralClaim;
 
+    // EIP 712 constants
+    bytes32 private constant _DOMAIN_SEPARATOR = keccak256(
+        abi.encode(
+            keccak256("EIP712Domain(string name,string version)"),
+            keccak256(bytes("Overlay Referrals")),
+            keccak256(bytes("1.0"))
+        )
+    );
+    bytes32 private constant _AFFILIATE_TO_TYPEHASH = keccak256(bytes("AffiliateTo(address affiliate)"));
+
     constructor() {
         _disableInitializers();
     }
@@ -47,10 +57,10 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     }
 
     function addAffiliateOrKolOnBehalfOf(address _trader, address _affiliate, bytes calldata signature) public {
-        // validate signature: _trader adds _affiliate as referrer
-        // TODO add a unique string to the hash
-        bytes32 signedMessageHash =
-            keccak256(abi.encodePacked(_affiliate)).toEthSignedMessageHash();
+        // validate EIP-712 signature: _trader adds _affiliate as referrer
+        bytes32 signedMessageHash = keccak256(
+            abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, keccak256(abi.encode(_AFFILIATE_TO_TYPEHASH, _affiliate)))
+        );
         if (signedMessageHash.recover(signature) != _trader) revert InvalidSignature();
         _saveReferralForTrader(_trader, _affiliate);
     }

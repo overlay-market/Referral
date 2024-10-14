@@ -7,9 +7,12 @@ import {IReferralList} from "src/IReferralList.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ECDSA} from "solady/src/utils/ECDSA.sol";
+import {SigUtils} from "./SigUtils.sol";
 
 contract ReferralListTest is Test {
     using ECDSA for bytes32;
+
+    SigUtils internal sigUtils;
 
     event Upgraded(address indexed implementation);
 
@@ -25,6 +28,12 @@ contract ReferralListTest is Test {
     address[] addresses = new address[](500);
     uint256[] amounts = new uint256[](500);
 
+    // EIP712 domain separator
+    struct EIP712Domain {
+        string name;
+        string version;
+    }
+
     event AllowKOL(address KOL);
     event AddAffiliateOrKOL(address trader, address affiliate);
     event SetRewardToken(address rewardToken);
@@ -35,6 +44,8 @@ contract ReferralListTest is Test {
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC"), 15_312_2295);
         vm.startPrank(OWNER);
+        EIP712Domain memory _domain = EIP712Domain("Overlay Referrals", "1.0");
+        sigUtils = new SigUtils(hashDomain(_domain));
         rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
         rl.initialize(OWNER, AIRDROPPER, address(OVL), VERIFIER);
         deal(address(OVL), AIRDROPPER, 5000 ether);
@@ -135,6 +146,43 @@ contract ReferralListTest is Test {
         rl.addAffiliateOrKOL(affiliate2);
     }
 
+    function testAddAffiliateOrKolOnBehalfOf() public {
+        // create and allow affiliate
+        address affiliate = makeAddr("affiliate");
+        vm.startPrank(AIRDROPPER);
+        rl.allowKOL(affiliate);
+
+        // create a valid message hash, and valid signature for USER
+        SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliate});
+        bytes32 msgHash = sigUtils.getTypedDataHash(affiliateTo);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(USER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        rl.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
+    }
+
+    function testAddAffiliateOrKolOnBehalfOfInvalidDomain() public {
+        // create and allow affiliate
+        address affiliate = makeAddr("affiliate");
+        vm.startPrank(AIRDROPPER);
+        rl.allowKOL(affiliate);
+
+        //
+        EIP712Domain memory _invalidDomain = EIP712Domain("Overlay Referrals Invalid", "1.0");
+        SigUtils invalidSigUtils = new SigUtils(hashDomain(_invalidDomain));
+
+        // create a message hash, and signature for USER
+        SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliate});
+        bytes32 msgHash = invalidSigUtils.getTypedDataHash(affiliateTo);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(USER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // expect to revert with InvalidSignature error
+        bytes4 selector = bytes4(keccak256("InvalidSignature()"));
+        vm.expectRevert(selector);
+        rl.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
+    }
+
     function testAddAffiliateOrKolOnBehalfOfInvalidSignature() public {
         // create and allow affiliate
         address affiliate = makeAddr("affiliate");
@@ -142,7 +190,8 @@ contract ReferralListTest is Test {
         rl.allowKOL(affiliate);
 
         // create a valid message hash, and valid signature for USER
-        bytes32 msgHash = keccak256(abi.encodePacked(affiliate)).toEthSignedMessageHash();
+        SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliate});
+        bytes32 msgHash = sigUtils.getTypedDataHash(affiliateTo);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(USER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
@@ -211,5 +260,16 @@ contract ReferralListTest is Test {
         vm.startPrank(makeAddr("kaker"));
         vm.expectRevert(selector);
         rl.setTraderDiscount(IReferralList.Tier.AFFILIATE, 0);
+    }
+
+    // Hashes the EIP712 domain separator struct
+    function hashDomain(EIP712Domain memory domain) private pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version)"),
+                keccak256(bytes(domain.name)),
+                keccak256(bytes(domain.version))
+            )
+        );
     }
 }
