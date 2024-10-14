@@ -18,7 +18,8 @@ contract ReferralListTest is Test {
     address private AIRDROPPER = makeAddr("airdropper");
     uint256 private VERIFIER_PRIVATE_KEY = 0x0303456;
     address private VERIFIER = vm.addr(VERIFIER_PRIVATE_KEY);
-    address private USER = makeAddr("user");
+    uint256 private USER_PRIVATE_KEY = 0x0404567;
+    address private USER = vm.addr(USER_PRIVATE_KEY);
     ReferralList rl;
 
     address[] addresses = new address[](500);
@@ -132,6 +133,24 @@ contract ReferralListTest is Test {
 
         vm.expectRevert(selector);
         rl.addAffiliateOrKOL(affiliate2);
+    }
+
+    function testAddAffiliateOrKolOnBehalfOfInvalidSignature() public {
+        // create and allow affiliate
+        address affiliate = makeAddr("affiliate");
+        vm.startPrank(AIRDROPPER);
+        rl.allowKOL(affiliate);
+
+        // create a valid message hash, and valid signature for USER
+        bytes32 msgHash = keccak256(abi.encodePacked(affiliate)).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(USER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // expect to revert with InvalidSignature error
+        bytes4 selector = bytes4(keccak256("InvalidSignature()"));
+        vm.expectRevert(selector);
+        // use invalid USER aka kaker
+        rl.addAffiliateOrKolOnBehalfOf(makeAddr("kaker"), affiliate, signature);
     }
 
     function testSetRewardToken() public {

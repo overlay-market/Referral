@@ -46,15 +46,24 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         _saveReferralForTrader(msg.sender, _user);
     }
 
-    function _saveReferralForTrader(address _trader, address _user) internal {
-        if (userTier[_user] != Tier.AFFILIATE && userTier[_user] != Tier.KOL) {
+    function addAffiliateOrKolOnBehalfOf(address _trader, address _affiliate, bytes calldata signature) public {
+        // validate signature: _trader adds _affiliate as referrer
+        // TODO add a unique string to the hash
+        bytes32 signedMessageHash =
+            keccak256(abi.encodePacked(_affiliate)).toEthSignedMessageHash();
+        if (signedMessageHash.recover(signature) != _trader) revert InvalidSignature();
+        _saveReferralForTrader(_trader, _affiliate);
+    }
+
+    function _saveReferralForTrader(address _trader, address _affiliate) internal {
+        if (userTier[_affiliate] != Tier.AFFILIATE && userTier[_affiliate] != Tier.KOL) {
             revert AffiliateNotAllowed();
         }
         if (referrals[_trader] != address(0)) {
             revert ReferrerAlreadySet();
         }
-        referrals[_trader] = _user;
-        emit AddAffiliateOrKOL(_trader, _user);
+        referrals[_trader] = _affiliate;
+        emit AddAffiliateOrKOL(_trader, _affiliate);
     }
 
     function allowAffiliate(bytes calldata signature) public {
