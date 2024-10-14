@@ -8,7 +8,6 @@ import {OverlayV1Token} from "src/OverlayV1Token.sol";
 import {ReferralList} from "src/ReferralList.sol";
 
 contract ReferralClaimTest is Test {
-
     ReferralList referralList;
     OverlayV1Token ovl;
 
@@ -92,5 +91,4 @@ contract ReferralClaimTest is Test {
 
         assertEq(ovl.balanceOf(alice), 200 ether);
     }
-
 }
