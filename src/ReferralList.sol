@@ -65,6 +65,18 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
         _saveReferralForTrader(_trader, _affiliate);
     }
 
+    function batchAddAffiliateOrKolOnBehalfOf(
+        address[] calldata _traders,
+        address[] calldata _affiliates,
+        bytes[] calldata signatures
+    ) public {
+        uint256 totalSubmits = _traders.length;
+        if (_affiliates.length != totalSubmits || signatures.length != totalSubmits) revert LengthMismatch();
+        for (uint16 i; i < totalSubmits; i++) {
+            addAffiliateOrKolOnBehalfOf(_traders[i], _affiliates[i], signatures[i]);
+        }
+    }
+
     function _saveReferralForTrader(address _trader, address _affiliate) internal {
         if (userTier[_affiliate] != Tier.AFFILIATE && userTier[_affiliate] != Tier.KOL) {
             revert AffiliateNotAllowed();
