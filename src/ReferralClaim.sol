@@ -6,7 +6,6 @@ import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
 
 contract ReferralClaim is Ownable {
-
     /// @notice ERC20-claimee inclusion root
     bytes32 public merkleRoot;
 
@@ -19,13 +18,11 @@ contract ReferralClaim is Ownable {
     /// @notice Timestamp in which `account` last claimed rewards
     mapping(address account => uint256) public lastClaim;
 
-
     /// @notice Thrown if address has already claimed
     error AlreadyClaimed();
 
     /// @notice Thrown if address/amount are not part of Merkle tree
     error NotInMerkle();
-
 
     /// @notice Creates a new MerkleClaimERC20 contract
     /// @param _token address of airdropped token

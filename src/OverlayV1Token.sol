@@ -12,13 +12,10 @@ bytes32 constant GOVERNOR_ROLE = keccak256("GOVERNOR");
 bytes32 constant GUARDIAN_ROLE = keccak256("GUARDIAN");
 
 interface IOverlayV1Token is IAccessControlEnumerable, IERC20 {
-
     function mint(address _recipient, uint256 _amount) external;
 
     function burn(uint256 _amount) external;
-
 }
-
 
 contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Overlay", "OVL") {
     constructor() {
