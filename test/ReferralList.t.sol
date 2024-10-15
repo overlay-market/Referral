@@ -158,6 +158,9 @@ contract ReferralListTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(USER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
+        vm.expectEmit(true, true, true, true);
+        emit AddAffiliateOrKOL(USER, affiliate);
+
         rl.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
     }
 
@@ -232,7 +235,12 @@ contract ReferralListTest is Test {
             USERs[i] = vm.addr(users_pk[i]);
             signatures[i] = signature;
         }
-
+        vm.expectEmit(true, true, true, true);
+        emit AddAffiliateOrKOL(USERs[0], affiliates[0]);
+        vm.expectEmit(true, true, true, true);
+        emit AddAffiliateOrKOL(USERs[1], affiliates[1]);
+        vm.expectEmit(true, true, true, true);
+        emit AddAffiliateOrKOL(USERs[2], affiliates[2]);
         rl.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
     }
 
