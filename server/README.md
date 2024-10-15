@@ -45,6 +45,23 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## API Endpoints
+
+### Affiliates
+
+- `POST /affiliates` (Dev mode only): Register a new affiliate
+  - Body: `{ "address": "0x..." }`
+
+- `GET /affiliates/:address`: Check if an affiliate is valid
+  - Response: `{ "isValid": true/false }`
+
+### Signatures
+
+- `POST /signatures`: Store a user's signature and affiliate address
+  - Body: `{ "trader": "0x...", "affiliate": "0x...", "signature": "0x..." }`
+
+Note: Each trader can only submit their signature once, and their affiliate cannot be changed after submission.
+
 ## Test
 
 ```bash
