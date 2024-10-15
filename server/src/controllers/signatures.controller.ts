@@ -1,4 +1,11 @@
-import { Controller, Post, Body } from "@nestjs/common"
+import {
+    Controller,
+    Post,
+    Body,
+    NotFoundException,
+    HttpCode,
+    HttpStatus,
+} from "@nestjs/common"
 import { SignatureService } from "../services/signature.service"
 import { StoreSignatureDto } from "../dto/store-signature.dto"
 
@@ -7,7 +14,15 @@ export class SignaturesController {
     constructor(private readonly signatureService: SignatureService) {}
 
     @Post()
+    @HttpCode(HttpStatus.CREATED)
     async store(@Body() storeSignatureDto: StoreSignatureDto) {
-        return this.signatureService.store(storeSignatureDto)
+        try {
+            return await this.signatureService.store(storeSignatureDto)
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException("Affiliate not found")
+            }
+            throw error
+        }
     }
 }
