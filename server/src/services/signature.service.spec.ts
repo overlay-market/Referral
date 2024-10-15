@@ -1,10 +1,15 @@
 import { Test, TestingModule } from "@nestjs/testing"
 import { getModelToken } from "@nestjs/mongoose"
 import { Model } from "mongoose"
+import { ConfigService } from "@nestjs/config"
 import { SignatureService } from "./signature.service"
 import { Signature } from "../schemas/signature.schema"
 import { Affiliate } from "../schemas/affiliate.schema"
-import { ConflictException, NotFoundException } from "@nestjs/common"
+import {
+    ConflictException,
+    NotFoundException,
+    BadRequestException,
+} from "@nestjs/common"
 
 describe("SignatureService", () => {
     let service: SignatureService
@@ -33,6 +38,17 @@ describe("SignatureService", () => {
                         exec: jest.fn(),
                     },
                 },
+                {
+                    provide: ConfigService,
+                    useValue: {
+                        get: jest.fn().mockImplementation((key: string) => {
+                            if (key === "referrals.chainId") return 1
+                            if (key === "referrals.contract")
+                                return "0x1234567890123456789012345678901234567890"
+                            return undefined
+                        }),
+                    },
+                },
             ],
         }).compile()
 
@@ -52,9 +68,10 @@ describe("SignatureService", () => {
     describe("store", () => {
         it("should throw NotFoundException if affiliate is not registered", async () => {
             const storeSignatureDto = {
-                trader: "0xtrader",
-                affiliate: "0xaffiliate",
-                signature: "0xsignature",
+                trader: "0x1111111111111111111111111111111111111111",
+                affiliate: "0x2222222222222222222222222222222222222222",
+                signature:
+                    "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
             }
 
             jest.spyOn(signatureModel, "findOne").mockReturnValue({
@@ -70,41 +87,12 @@ describe("SignatureService", () => {
             )
         })
 
-        it("should store signature if affiliate is registered", async () => {
-            const storeSignatureDto = {
-                trader: "0xtrader",
-                affiliate: "0xaffiliate",
-                signature: "0xsignature",
-            }
-
-            jest.spyOn(signatureModel, "findOne").mockReturnValue({
-                exec: jest.fn().mockResolvedValueOnce(null),
-            } as any)
-
-            jest.spyOn(affiliateModel, "findOne").mockReturnValue({
-                exec: jest
-                    .fn()
-                    .mockResolvedValueOnce({ address: "0xaffiliate" }),
-            } as any)
-
-            const saveMock = jest.fn().mockResolvedValueOnce(mockSignature)
-            jest.spyOn(signatureModel, "create").mockImplementationOnce(
-                () =>
-                    ({
-                        save: saveMock,
-                    }) as any,
-            )
-
-            const result = await service.store(storeSignatureDto)
-            expect(result).toEqual(mockSignature)
-            expect(saveMock).toHaveBeenCalled()
-        })
-
         it("should throw ConflictException if signature already exists for trader", async () => {
             const storeSignatureDto = {
-                trader: "0xtrader",
-                affiliate: "0xaffiliate",
-                signature: "0xsignature",
+                trader: "0x1111111111111111111111111111111111111111",
+                affiliate: "0x2222222222222222222222222222222222222222",
+                signature:
+                    "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
             }
 
             jest.spyOn(signatureModel, "findOne").mockReturnValue({
@@ -115,11 +103,73 @@ describe("SignatureService", () => {
                 ConflictException,
             )
         })
+
+        it("should throw BadRequestException if signature is invalid", async () => {
+            const storeSignatureDto = {
+                trader: "0x1111111111111111111111111111111111111111",
+                affiliate: "0x2222222222222222222222222222222222222222",
+                signature:
+                    "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+            }
+
+            jest.spyOn(signatureModel, "findOne").mockReturnValue({
+                exec: jest.fn().mockResolvedValueOnce(null),
+            } as any)
+
+            jest.spyOn(affiliateModel, "findOne").mockReturnValue({
+                exec: jest.fn().mockResolvedValueOnce({
+                    address: storeSignatureDto.affiliate,
+                }),
+            } as any)
+
+            // Mock the validateSignature method to return false
+            jest.spyOn(service as any, "validateSignature").mockResolvedValue(
+                false,
+            )
+
+            await expect(service.store(storeSignatureDto)).rejects.toThrow(
+                BadRequestException,
+            )
+        })
+
+        it("should store signature if affiliate is registered and signature is valid", async () => {
+            const storeSignatureDto = {
+                trader: "0x1111111111111111111111111111111111111111",
+                affiliate: "0x2222222222222222222222222222222222222222",
+                signature:
+                    "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+            }
+
+            jest.spyOn(signatureModel, "findOne").mockReturnValue({
+                exec: jest.fn().mockResolvedValueOnce(null),
+            } as any)
+
+            jest.spyOn(affiliateModel, "findOne").mockReturnValue({
+                exec: jest.fn().mockResolvedValueOnce({
+                    address: storeSignatureDto.affiliate,
+                }),
+            } as any)
+
+            // Mock the validateSignature method to return true
+            jest.spyOn(service as any, "validateSignature").mockResolvedValue(
+                true,
+            )
+
+            const saveMock = jest.fn().mockResolvedValueOnce(mockSignature)
+            jest.spyOn(signatureModel, "create").mockReturnValueOnce({
+                save: saveMock,
+            } as any)
+
+            const result = await service.store(storeSignatureDto)
+            expect(result).toEqual(mockSignature)
+            expect(saveMock).toHaveBeenCalled()
+        })
     })
 })
 
 const mockSignature = {
-    trader: "0xtrader",
-    affiliate: "0xaffiliate",
-    signature: "0xsignature",
+    trader: "0x1111111111111111111111111111111111111111",
+    affiliate: "0x2222222222222222222222222222222222222222",
+    signature:
+        "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
 }

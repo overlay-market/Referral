@@ -1,4 +1,4 @@
-import { IsEthereumAddress, IsString } from "class-validator"
+import { IsEthereumAddress, Matches } from "class-validator"
 
 export class StoreSignatureDto {
     @IsEthereumAddress()
@@ -7,6 +7,6 @@ export class StoreSignatureDto {
     @IsEthereumAddress()
     affiliate: string
 
-    @IsString()
+    @Matches(/^0x[a-fA-F0-9]{130}$/, { message: "Invalid signature format" })
     signature: string
 }
