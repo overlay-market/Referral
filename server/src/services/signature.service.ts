@@ -16,7 +16,7 @@ export class SignatureService {
     constructor(
         @InjectModel(Signature.name) private signatureModel: Model<Signature>,
         @InjectModel(Affiliate.name) private affiliateModel: Model<Affiliate>,
-    ) {}
+    ) { }
 
     async store(storeSignatureDto: StoreSignatureDto): Promise<Signature> {
         const existingSignature = await this.signatureModel
@@ -82,5 +82,13 @@ export class SignatureService {
             console.error("Error validating signature:", error)
             return false
         }
+    }
+
+    async checkSignature(trader: string): Promise<boolean> {
+        const signature = await this.signatureModel
+            .findOne({ trader: trader })
+            .exec()
+
+        return !!signature
     }
 }
