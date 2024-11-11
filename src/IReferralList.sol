@@ -13,6 +13,7 @@ interface IReferralList {
     error InvalidSignature();
     error LengthMismatch();
     error ReferrerAlreadySet();
+    error SelfReferralNotAllowed();
 
     event AllowAffiliate(address affiliate);
     event AllowKOL(address KOL);
