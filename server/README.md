@@ -50,6 +50,9 @@ The server will be available at `http://localhost:3000`.
 - `POST /signatures`: Store a user's signature and affiliate address
   - Body: `{ "trader": "0x...", "affiliate": "0x...", "signature": "0x..." }`
 
+- `GET /signatures/check/:address`: Check if a trader already has a signature stored
+  - Response: `{ "exists": true/false }`
+
 Note: Each trader can only submit their signature once, and their affiliate cannot be changed after submission.
 
 ## Test
