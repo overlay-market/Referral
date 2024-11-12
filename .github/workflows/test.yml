@@ -1,21 +1,34 @@
-on:
-  pull_request:
-  workflow_dispatch:
+name: test
+
+on: workflow_dispatch
+
+env:
+  FOUNDRY_PROFILE: ci
 
 jobs:
-  test:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: Foundry project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          submodules: true
-      - uses: actions/setup-node@v3
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
         with:
-          node-version: 18
-          cache: 'npm'
-      - run: npm install
-      - run: npx hardhat coverage
-      - uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.json,lcov.info,coverage/lcov.info
+          version: nightly
+
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          forge test -vvv
+        id: test
