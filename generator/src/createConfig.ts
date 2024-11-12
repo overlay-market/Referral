@@ -4,11 +4,12 @@ import { ethers } from "ethers"
 import "dotenv/config"
 import Generator from "./generator"
 
-const main = async () => {
+export const createConfig = async () => {
     const {
       rewardsPending: airdrop,
       lastBlockTimestamp,
-      totalRewards
+      totalRewards,
+      top3Rewards
     } = await fetchReferralRewards()
 
     const decimals = 0 // subgraph returns raw number of tokens
@@ -43,7 +44,17 @@ const main = async () => {
       }
     }
 
-    console.log("Updated rewards on the database.")
+    const tokenDecimals = 18
+
+    console.log(`\nSubgraph: ${process.env.SUBGRAPH}`)
+    console.log(`\nFound ${Object.keys(airdrop).length} wallets with rewards pending.`)
+    console.log(`\nTop 3 wallets with most rewards pending:
+      1. ${top3Rewards[0].wallet} - ${top3Rewards[0].amount} (${ethers.utils.formatUnits(top3Rewards[0].amount.toString(), tokenDecimals).toString()})
+      2. ${top3Rewards[1].wallet} - ${top3Rewards[1].amount} (${ethers.utils.formatUnits(top3Rewards[1].amount.toString(), tokenDecimals).toString()})
+      3. ${top3Rewards[2].wallet} - ${top3Rewards[2].amount} (${ethers.utils.formatUnits(top3Rewards[2].amount.toString(), tokenDecimals).toString()})`)
+    console.log(`\nTotal amount of rewards pending: ${totalRewards} (${ethers.utils.formatUnits(totalRewards, tokenDecimals).toString()})`)
+
+    console.log("\nUpdated rewards on the database.")
 
     // Write rewards to disk
     fs.writeFileSync(
@@ -66,6 +77,15 @@ const fetchReferralRewards = async () => {
 
     const rewardsPending: Record<string, string> = {}
     let res: {owner: {id: string}, totalRewardsPending: string, id: string}[] = []
+
+    let totalRewards = BigInt(0)
+    let top3Rewards: {wallet: string, amount: bigint}[] = [
+        {wallet: ethers.constants.AddressZero, amount: BigInt(0)},
+        {wallet: ethers.constants.AddressZero, amount: BigInt(0)},
+        {wallet: ethers.constants.AddressZero, amount: BigInt(0)}
+    ]
+    
+    console.log("Fetching rewards data from the subgraph...\n")
 
     do {
         const query = `query GetReferralRewards {
@@ -94,22 +114,31 @@ const fetchReferralRewards = async () => {
         res = data.referralPositions
         lastBlockTimestamp = data._meta.block.timestamp
 
-        res.forEach(({owner, totalRewardsPending}) => rewardsPending[owner.id] = totalRewardsPending)
+        res.forEach(({owner, totalRewardsPending}) => {
+            rewardsPending[owner.id] = totalRewardsPending
+            const amount = BigInt(totalRewardsPending)
+            totalRewards += amount
+
+            if (amount > top3Rewards[0].amount) {
+                top3Rewards[2] = top3Rewards[1]
+                top3Rewards[1] = top3Rewards[0]
+                top3Rewards[0] = {wallet: owner.id, amount}
+            } else if (amount > top3Rewards[1].amount) {
+                top3Rewards[2] = top3Rewards[1]
+                top3Rewards[1] = {wallet: owner.id, amount}
+            } else if (amount > top3Rewards[2].amount) {
+                top3Rewards[2] = {wallet: owner.id, amount}
+            }
+        })
 
         // responses are sorted by id
         lastId = res[res.length - 1].id
     } while (res.length === 1000)
 
-    const totalRewards: bigint = Object.values(rewardsPending).reduce(
-      (sum, value) => sum + BigInt(value),
-      BigInt(0)
-    )
-
     return {
       rewardsPending,
       lastBlockTimestamp,
-      totalRewards: totalRewards.toString()
+      totalRewards: totalRewards.toString(),
+      top3Rewards
     }
 }
-
-main()
