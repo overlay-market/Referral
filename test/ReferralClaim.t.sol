@@ -91,4 +91,23 @@ contract ReferralClaimTest is Test {
 
         assertEq(ovl.balanceOf(alice), 200 ether);
     }
+
+    function test_initClaimPeriod_withADifferentToken() public {
+        OverlayV1Token ovl2 = new OverlayV1Token();
+        deal(address(ovl2), AIRDROPPER, 5000 ether);
+
+        vm.startPrank(AIRDROPPER);
+        referralList.setRewardToken(address(ovl2));
+
+        ovl2.approve(address(referralList), 5000 ether);
+
+        referralList.initClaimPeriod(merkleRoot, 100 ether, block.timestamp);
+        assertEq(ovl2.balanceOf(address(referralList.referralClaim())), 100 ether);
+
+        vm.stopPrank();
+
+        vm.prank(alice);
+        referralList.claimRewards(alice, 100 ether, proof);
+        assertEq(ovl2.balanceOf(alice), 100 ether);
+    }
 }

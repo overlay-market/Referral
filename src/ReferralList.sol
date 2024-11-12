@@ -45,9 +45,9 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     {
         _initializeOwner(owner_);
         _grantRoles(_airdropper, ROLE_ADMIN | ROLE_AIRDROPPER); // b11
-        _setRewardToken(_rewardToken);
         _setVerifyingAddress(_verifyingAddress);
         referralClaim = new ReferralClaim(bytes32(0), _rewardToken);
+        _setRewardToken(_rewardToken);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -78,6 +78,9 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     }
 
     function _saveReferralForTrader(address _trader, address _affiliate) internal {
+        if (msg.sender == _affiliate) {
+            revert SelfReferralNotAllowed();
+        }
         if (userTier[_affiliate] != Tier.AFFILIATE && userTier[_affiliate] != Tier.KOL) {
             revert AffiliateNotAllowed();
         }
@@ -129,6 +132,7 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
 
     function _setRewardToken(address _rewardToken) internal {
         rewardToken = _rewardToken;
+        referralClaim.setToken(_rewardToken);
         emit SetRewardToken(_rewardToken);
     }
 

@@ -23,7 +23,7 @@ contract ReferralListTest is Test {
     address private VERIFIER = vm.addr(VERIFIER_PRIVATE_KEY);
     uint256 private USER_PRIVATE_KEY = 0x0404567;
     address private USER = vm.addr(USER_PRIVATE_KEY);
-    ReferralList rl;
+    ReferralList referralList;
 
     address[] addresses = new address[](500);
     uint256[] amounts = new uint256[](500);
@@ -44,10 +44,11 @@ contract ReferralListTest is Test {
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC"), 15_312_2295);
         vm.startPrank(OWNER);
+
         EIP712Domain memory _domain = EIP712Domain("Overlay Referrals", "1.0");
         sigUtils = new SigUtils(hashDomain(_domain));
-        rl = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
-        rl.initialize(OWNER, AIRDROPPER, address(OVL), VERIFIER);
+        referralList = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
+        referralList.initialize(OWNER, AIRDROPPER, address(OVL), VERIFIER);
         deal(address(OVL), AIRDROPPER, 5000 ether);
     }
 
@@ -55,20 +56,21 @@ contract ReferralListTest is Test {
         address newImplementation = address(new ReferralList());
         vm.expectEmit();
         emit Upgraded(newImplementation);
-        rl.upgradeTo(newImplementation);
+        referralList.upgradeTo(newImplementation);
     }
 
     function testUpgradeInvalidAddress() public {
         vm.expectRevert();
-        rl.upgradeToAndCall(makeAddr("not a contract"), "");
+        referralList.upgradeToAndCall(makeAddr("not a contract"), "");
     }
 
     function testAllowAffiliate() public {
-        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
-        rl.allowAffiliate(signature);
+        referralList.allowAffiliate(signature);
     }
 
     function testAllowKOL() public {
@@ -76,42 +78,45 @@ contract ReferralListTest is Test {
         vm.startPrank(AIRDROPPER);
         vm.expectEmit();
         emit AllowKOL(USER);
-        rl.allowKOL(USER);
+        referralList.allowKOL(USER);
 
         vm.expectRevert(selector);
-        rl.allowKOL(USER);
+        referralList.allowKOL(USER);
     }
 
     function testDowngrade() public {
         bytes4 selector = bytes4(keccak256("AffiliateAlreadyExists()"));
         vm.startPrank(AIRDROPPER);
-        rl.allowKOL(USER);
-        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
+        referralList.allowKOL(USER);
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
         vm.expectRevert(selector);
-        rl.allowAffiliate(signature);
+        referralList.allowAffiliate(signature);
     }
 
     function testAllowAffiliateInvalidSignature() public {
         bytes4 selector = bytes4(keccak256("InvalidSignature()"));
-        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(makeAddr("kaker"));
         vm.expectRevert(selector);
-        rl.allowAffiliate(signature);
+        referralList.allowAffiliate(signature);
     }
 
     function testAllowAffiliateAlreadyExists() public {
-        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(rl), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
-        rl.allowAffiliate(signature);
+        referralList.allowAffiliate(signature);
         vm.expectRevert(bytes4(keccak256("AffiliateAlreadyExists()")));
-        rl.allowAffiliate(signature);
+        referralList.allowAffiliate(signature);
     }
 
     function testAddNotAllowedReferrer() public {
@@ -119,38 +124,39 @@ contract ReferralListTest is Test {
         address affiliate = makeAddr("affiliate");
         vm.startPrank(USER);
         vm.expectRevert(selector);
-        rl.addAffiliateOrKOL(affiliate);
+        referralList.addAffiliateOrKOL(affiliate);
     }
 
     function testAddNotAllowedReferrerTwice() public {
         bytes4 selector = bytes4(keccak256("ReferrerAlreadySet()"));
         address affiliate2 = makeAddr("user2");
-        bytes32 msgHash = keccak256(abi.encodePacked(affiliate2, address(rl), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(affiliate2, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(affiliate2);
-        rl.allowAffiliate(signature);
+        referralList.allowAffiliate(signature);
 
         address affiliate = makeAddr("affiliate");
         vm.startPrank(AIRDROPPER);
-        rl.allowKOL(affiliate);
+        referralList.allowKOL(affiliate);
         vm.startPrank(USER);
         vm.expectEmit();
         emit AddAffiliateOrKOL(USER, affiliate);
-        rl.addAffiliateOrKOL(affiliate);
+        referralList.addAffiliateOrKOL(affiliate);
 
         vm.expectRevert(selector);
-        rl.addAffiliateOrKOL(affiliate);
+        referralList.addAffiliateOrKOL(affiliate);
 
         vm.expectRevert(selector);
-        rl.addAffiliateOrKOL(affiliate2);
+        referralList.addAffiliateOrKOL(affiliate2);
     }
 
     function testAddAffiliateOrKolOnBehalfOf() public {
         // create and allow affiliate
         address affiliate = makeAddr("affiliate");
         vm.startPrank(AIRDROPPER);
-        rl.allowKOL(affiliate);
+        referralList.allowKOL(affiliate);
 
         // create a valid message hash, and valid signature for USER
         SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliate});
@@ -161,14 +167,14 @@ contract ReferralListTest is Test {
         vm.expectEmit(true, true, true, true);
         emit AddAffiliateOrKOL(USER, affiliate);
 
-        rl.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
+        referralList.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
     }
 
     function testAddAffiliateOrKolOnBehalfOfInvalidDomain() public {
         // create and allow affiliate
         address affiliate = makeAddr("affiliate");
         vm.startPrank(AIRDROPPER);
-        rl.allowKOL(affiliate);
+        referralList.allowKOL(affiliate);
 
         // setup invalid domain
         EIP712Domain memory _invalidDomain = EIP712Domain("Overlay Referrals Invalid", "1.0");
@@ -183,14 +189,14 @@ contract ReferralListTest is Test {
         // expect to revert with InvalidSignature error
         bytes4 selector = bytes4(keccak256("InvalidSignature()"));
         vm.expectRevert(selector);
-        rl.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
+        referralList.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
     }
 
     function testAddAffiliateOrKolOnBehalfOfInvalidSignature() public {
         // create and allow affiliate
         address affiliate = makeAddr("affiliate");
         vm.startPrank(AIRDROPPER);
-        rl.allowKOL(affiliate);
+        referralList.allowKOL(affiliate);
 
         // create a valid message hash, and valid signature for USER
         SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliate});
@@ -202,7 +208,7 @@ contract ReferralListTest is Test {
         bytes4 selector = bytes4(keccak256("InvalidSignature()"));
         vm.expectRevert(selector);
         // use invalid USER aka kaker
-        rl.addAffiliateOrKolOnBehalfOf(makeAddr("kaker"), affiliate, signature);
+        referralList.addAffiliateOrKolOnBehalfOf(makeAddr("kaker"), affiliate, signature);
     }
 
     function testBatchAddAffiliateOrKolOnBehalfOf() public {
@@ -214,15 +220,15 @@ contract ReferralListTest is Test {
         address affiliate = makeAddr("affiliate");
         affiliates[0] = affiliate;
         vm.startPrank(AIRDROPPER);
-        rl.allowKOL(affiliate);
+        referralList.allowKOL(affiliate);
         // create and allow affiliate2
         address affiliate2 = makeAddr("affiliate2");
         affiliates[1] = affiliate2;
-        rl.allowKOL(affiliate2);
+        referralList.allowKOL(affiliate2);
         // create and allow affiliate3
         address affiliate3 = makeAddr("affiliate3");
         affiliates[2] = affiliate3;
-        rl.allowKOL(affiliate3);
+        referralList.allowKOL(affiliate3);
 
         // create a valid message hash, and valid signature for USERs
         uint32[3] memory users_pk = [0x0213456, 0x052436766, 0x02431657];
@@ -241,7 +247,7 @@ contract ReferralListTest is Test {
         emit AddAffiliateOrKOL(USERs[1], affiliates[1]);
         vm.expectEmit(true, true, true, true);
         emit AddAffiliateOrKOL(USERs[2], affiliates[2]);
-        rl.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
+        referralList.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
     }
 
     function testBatchAddAffiliateOrKolOnBehalfOfInvalidDomain() public {
@@ -253,11 +259,11 @@ contract ReferralListTest is Test {
         address affiliate = makeAddr("affiliate");
         affiliates[0] = affiliate;
         vm.startPrank(AIRDROPPER);
-        rl.allowKOL(affiliate);
+        referralList.allowKOL(affiliate);
         // create and allow affiliate2
         address affiliate2 = makeAddr("affiliate2");
         affiliates[1] = affiliate2;
-        rl.allowKOL(affiliate2);
+        referralList.allowKOL(affiliate2);
 
         // setup invalid domain
         EIP712Domain memory _invalidDomain = EIP712Domain("Overlay Referrals Invalid", "1.0");
@@ -278,7 +284,7 @@ contract ReferralListTest is Test {
         // expect to revert with InvalidSignature error
         bytes4 selector = bytes4(keccak256("InvalidSignature()"));
         vm.expectRevert(selector);
-        rl.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
+        referralList.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
     }
 
     function testBatchAddAffiliateOrKolOnBehalfOfInvalidSignature() public {
@@ -290,15 +296,15 @@ contract ReferralListTest is Test {
         address affiliate = makeAddr("affiliate");
         affiliates[0] = affiliate;
         vm.startPrank(AIRDROPPER);
-        rl.allowKOL(affiliate);
+        referralList.allowKOL(affiliate);
         // create and allow affiliate2
         address affiliate2 = makeAddr("affiliate2");
         affiliates[1] = affiliate2;
-        rl.allowKOL(affiliate2);
+        referralList.allowKOL(affiliate2);
         // create and allow affiliate3
         address affiliate3 = makeAddr("affiliate3");
         affiliates[2] = affiliate3;
-        rl.allowKOL(affiliate3);
+        referralList.allowKOL(affiliate3);
 
         // create a valid message hash, and valid signature for USERs
         uint32[3] memory users_pk = [0x0213456, 0x052436766, 0x02431657];
@@ -317,7 +323,7 @@ contract ReferralListTest is Test {
         // expect to revert with InvalidSignature error
         bytes4 selector = bytes4(keccak256("InvalidSignature()"));
         vm.expectRevert(selector);
-        rl.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
+        referralList.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
     }
 
     function testSetRewardToken() public {
@@ -325,8 +331,11 @@ contract ReferralListTest is Test {
         address token = makeAddr("token");
         vm.expectEmit();
         emit SetRewardToken(token);
-        rl.setRewardToken(token);
-        assertEq(rl.rewardToken(), token);
+        referralList.setRewardToken(token);
+        assertEq(referralList.rewardToken(), token);
+
+        address referralClaimToken = address(referralList.referralClaim().token());
+        assertEq(referralClaimToken, token);
     }
 
     function testSetRewardTokenNotAdmin() public {
@@ -334,7 +343,7 @@ contract ReferralListTest is Test {
         vm.startPrank(makeAddr("kaker"));
         address token = makeAddr("token");
         vm.expectRevert(selector);
-        rl.setRewardToken(token);
+        referralList.setRewardToken(token);
     }
 
     function testSetVerifyingAddress() public {
@@ -342,8 +351,8 @@ contract ReferralListTest is Test {
         address verifyingAddress = makeAddr("verifyingAddress");
         vm.expectEmit();
         emit SetVerifyingAddress(verifyingAddress);
-        rl.setVerifyingAddress(verifyingAddress);
-        assertEq(rl.verifyingAddress(), verifyingAddress);
+        referralList.setVerifyingAddress(verifyingAddress);
+        assertEq(referralList.verifyingAddress(), verifyingAddress);
     }
 
     function testSetAffiliateComission(uint256 tierNumber, uint48 comission) public {
@@ -352,15 +361,15 @@ contract ReferralListTest is Test {
         vm.startPrank(AIRDROPPER);
         vm.expectEmit();
         emit SetAffiliateComission(tier, comission);
-        rl.setAffiliateComission(tier, comission);
-        assertEq(rl.tierAffiliateComission(tier), comission);
+        referralList.setAffiliateComission(tier, comission);
+        assertEq(referralList.tierAffiliateComission(tier), comission);
     }
 
     function testSetAffiliateComissionNotAdmin() public {
         bytes4 selector = bytes4(keccak256("Unauthorized()"));
         vm.startPrank(makeAddr("kaker"));
         vm.expectRevert(selector);
-        rl.setAffiliateComission(IReferralList.Tier.AFFILIATE, 0);
+        referralList.setAffiliateComission(IReferralList.Tier.AFFILIATE, 0);
     }
 
     function testSetTraderDiscount(uint256 tierNumber, uint48 discount) public {
@@ -369,15 +378,22 @@ contract ReferralListTest is Test {
         vm.startPrank(AIRDROPPER);
         vm.expectEmit();
         emit SetTraderDiscount(tier, discount);
-        rl.setTraderDiscount(tier, discount);
-        assertEq(rl.tierTraderDiscount(tier), discount);
+        referralList.setTraderDiscount(tier, discount);
+        assertEq(referralList.tierTraderDiscount(tier), discount);
     }
 
     function testSetTraderDiscountNotAdmin() public {
         bytes4 selector = bytes4(keccak256("Unauthorized()"));
         vm.startPrank(makeAddr("kaker"));
         vm.expectRevert(selector);
-        rl.setTraderDiscount(IReferralList.Tier.AFFILIATE, 0);
+        referralList.setTraderDiscount(IReferralList.Tier.AFFILIATE, 0);
+    }
+
+    function testSelfReferralNotAllowed() public {
+        bytes4 selector = bytes4(keccak256("SelfReferralNotAllowed()"));
+        vm.startPrank(AIRDROPPER);
+        vm.expectRevert(selector);
+        referralList.addAffiliateOrKOL(AIRDROPPER);
     }
 
     // Hashes the EIP712 domain separator struct
