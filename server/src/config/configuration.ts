@@ -11,4 +11,6 @@ export default () => ({
         contract: "0x1cee53AB89004b2a9E173edc6F51509f8eB32122",
         chainId: 421614,
     },
+    isDevelopmentMode: process.env.NODE_ENV !== "production",
+    mongoUri: process.env.MONGO_URI || "mongodb://localhost:27017/referral",
 })

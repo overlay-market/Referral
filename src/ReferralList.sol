@@ -25,6 +25,16 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
 
     ReferralClaim public referralClaim;
 
+    // EIP 712 constants
+    bytes32 private constant _DOMAIN_SEPARATOR = keccak256(
+        abi.encode(
+            keccak256("EIP712Domain(string name,string version)"),
+            keccak256(bytes("Overlay Referrals")),
+            keccak256(bytes("1.0"))
+        )
+    );
+    bytes32 private constant _AFFILIATE_TO_TYPEHASH = keccak256(bytes("AffiliateTo(address affiliate)"));
+
     constructor() {
         _disableInitializers();
     }
@@ -43,17 +53,42 @@ contract ReferralList is OwnableRoles, Initializable, UUPSUpgradeable, IReferral
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function addAffiliateOrKOL(address _user) public {
-        if (msg.sender == _user) {
+        _saveReferralForTrader(msg.sender, _user);
+    }
+
+    function addAffiliateOrKolOnBehalfOf(address _trader, address _affiliate, bytes calldata signature) public {
+        // validate EIP-712 signature: _trader adds _affiliate as referrer
+        bytes32 signedMessageHash = keccak256(
+            abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, keccak256(abi.encode(_AFFILIATE_TO_TYPEHASH, _affiliate)))
+        );
+        if (signedMessageHash.recover(signature) != _trader) revert InvalidSignature();
+        _saveReferralForTrader(_trader, _affiliate);
+    }
+
+    function batchAddAffiliateOrKolOnBehalfOf(
+        address[] calldata _traders,
+        address[] calldata _affiliates,
+        bytes[] calldata signatures
+    ) public {
+        uint256 totalSubmits = _traders.length;
+        if (_affiliates.length != totalSubmits || signatures.length != totalSubmits) revert LengthMismatch();
+        for (uint16 i; i < totalSubmits; i++) {
+            addAffiliateOrKolOnBehalfOf(_traders[i], _affiliates[i], signatures[i]);
+        }
+    }
+
+    function _saveReferralForTrader(address _trader, address _affiliate) internal {
+        if (msg.sender == _affiliate) {
             revert SelfReferralNotAllowed();
         }
-        if (userTier[_user] != Tier.AFFILIATE && userTier[_user] != Tier.KOL) {
+        if (userTier[_affiliate] != Tier.AFFILIATE && userTier[_affiliate] != Tier.KOL) {
             revert AffiliateNotAllowed();
         }
-        if (referrals[msg.sender] != address(0)) {
+        if (referrals[_trader] != address(0)) {
             revert ReferrerAlreadySet();
         }
-        referrals[msg.sender] = _user;
-        emit AddAffiliateOrKOL(msg.sender, _user);
+        referrals[_trader] = _affiliate;
+        emit AddAffiliateOrKOL(_trader, _affiliate);
     }
 
     function allowAffiliate(bytes calldata signature) public {

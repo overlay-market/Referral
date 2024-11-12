@@ -7,9 +7,12 @@ import {IReferralList} from "src/IReferralList.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ECDSA} from "solady/src/utils/ECDSA.sol";
+import {SigUtils} from "./SigUtils.sol";
 
 contract ReferralListTest is Test {
     using ECDSA for bytes32;
+
+    SigUtils internal sigUtils;
 
     event Upgraded(address indexed implementation);
 
@@ -18,11 +21,18 @@ contract ReferralListTest is Test {
     address private AIRDROPPER = makeAddr("airdropper");
     uint256 private VERIFIER_PRIVATE_KEY = 0x0303456;
     address private VERIFIER = vm.addr(VERIFIER_PRIVATE_KEY);
-    address private USER = makeAddr("user");
+    uint256 private USER_PRIVATE_KEY = 0x0404567;
+    address private USER = vm.addr(USER_PRIVATE_KEY);
     ReferralList referralList;
 
     address[] addresses = new address[](500);
     uint256[] amounts = new uint256[](500);
+
+    // EIP712 domain separator
+    struct EIP712Domain {
+        string name;
+        string version;
+    }
 
     event AllowKOL(address KOL);
     event AddAffiliateOrKOL(address trader, address affiliate);
@@ -34,6 +44,9 @@ contract ReferralListTest is Test {
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC"), 15_312_2295);
         vm.startPrank(OWNER);
+
+        EIP712Domain memory _domain = EIP712Domain("Overlay Referrals", "1.0");
+        sigUtils = new SigUtils(hashDomain(_domain));
         referralList = ReferralList(address(new ERC1967Proxy(address(new ReferralList()), "")));
         referralList.initialize(OWNER, AIRDROPPER, address(OVL), VERIFIER);
         deal(address(OVL), AIRDROPPER, 5000 ether);
@@ -52,7 +65,8 @@ contract ReferralListTest is Test {
     }
 
     function testAllowAffiliate() public {
-        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
@@ -74,7 +88,8 @@ contract ReferralListTest is Test {
         bytes4 selector = bytes4(keccak256("AffiliateAlreadyExists()"));
         vm.startPrank(AIRDROPPER);
         referralList.allowKOL(USER);
-        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
@@ -84,7 +99,8 @@ contract ReferralListTest is Test {
 
     function testAllowAffiliateInvalidSignature() public {
         bytes4 selector = bytes4(keccak256("InvalidSignature()"));
-        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(makeAddr("kaker"));
@@ -93,7 +109,8 @@ contract ReferralListTest is Test {
     }
 
     function testAllowAffiliateAlreadyExists() public {
-        bytes32 msgHash = keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(USER, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(USER);
@@ -113,7 +130,8 @@ contract ReferralListTest is Test {
     function testAddNotAllowedReferrerTwice() public {
         bytes4 selector = bytes4(keccak256("ReferrerAlreadySet()"));
         address affiliate2 = makeAddr("user2");
-        bytes32 msgHash = keccak256(abi.encodePacked(affiliate2, address(referralList), block.chainid)).toEthSignedMessageHash();
+        bytes32 msgHash =
+            keccak256(abi.encodePacked(affiliate2, address(referralList), block.chainid)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(VERIFIER_PRIVATE_KEY, msgHash);
         bytes memory signature = abi.encodePacked(r, s, v);
         vm.startPrank(affiliate2);
@@ -132,6 +150,180 @@ contract ReferralListTest is Test {
 
         vm.expectRevert(selector);
         referralList.addAffiliateOrKOL(affiliate2);
+    }
+
+    function testAddAffiliateOrKolOnBehalfOf() public {
+        // create and allow affiliate
+        address affiliate = makeAddr("affiliate");
+        vm.startPrank(AIRDROPPER);
+        referralList.allowKOL(affiliate);
+
+        // create a valid message hash, and valid signature for USER
+        SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliate});
+        bytes32 msgHash = sigUtils.getTypedDataHash(affiliateTo);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(USER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        vm.expectEmit(true, true, true, true);
+        emit AddAffiliateOrKOL(USER, affiliate);
+
+        referralList.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
+    }
+
+    function testAddAffiliateOrKolOnBehalfOfInvalidDomain() public {
+        // create and allow affiliate
+        address affiliate = makeAddr("affiliate");
+        vm.startPrank(AIRDROPPER);
+        referralList.allowKOL(affiliate);
+
+        // setup invalid domain
+        EIP712Domain memory _invalidDomain = EIP712Domain("Overlay Referrals Invalid", "1.0");
+        SigUtils invalidSigUtils = new SigUtils(hashDomain(_invalidDomain));
+
+        // create a message hash, and signature for USER
+        SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliate});
+        bytes32 msgHash = invalidSigUtils.getTypedDataHash(affiliateTo);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(USER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // expect to revert with InvalidSignature error
+        bytes4 selector = bytes4(keccak256("InvalidSignature()"));
+        vm.expectRevert(selector);
+        referralList.addAffiliateOrKolOnBehalfOf(USER, affiliate, signature);
+    }
+
+    function testAddAffiliateOrKolOnBehalfOfInvalidSignature() public {
+        // create and allow affiliate
+        address affiliate = makeAddr("affiliate");
+        vm.startPrank(AIRDROPPER);
+        referralList.allowKOL(affiliate);
+
+        // create a valid message hash, and valid signature for USER
+        SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliate});
+        bytes32 msgHash = sigUtils.getTypedDataHash(affiliateTo);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(USER_PRIVATE_KEY, msgHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // expect to revert with InvalidSignature error
+        bytes4 selector = bytes4(keccak256("InvalidSignature()"));
+        vm.expectRevert(selector);
+        // use invalid USER aka kaker
+        referralList.addAffiliateOrKolOnBehalfOf(makeAddr("kaker"), affiliate, signature);
+    }
+
+    function testBatchAddAffiliateOrKolOnBehalfOf() public {
+        address[] memory affiliates = new address[](3);
+        address[] memory USERs = new address[](3);
+        bytes[] memory signatures = new bytes[](3);
+
+        // create and allow affiliate1
+        address affiliate = makeAddr("affiliate");
+        affiliates[0] = affiliate;
+        vm.startPrank(AIRDROPPER);
+        referralList.allowKOL(affiliate);
+        // create and allow affiliate2
+        address affiliate2 = makeAddr("affiliate2");
+        affiliates[1] = affiliate2;
+        referralList.allowKOL(affiliate2);
+        // create and allow affiliate3
+        address affiliate3 = makeAddr("affiliate3");
+        affiliates[2] = affiliate3;
+        referralList.allowKOL(affiliate3);
+
+        // create a valid message hash, and valid signature for USERs
+        uint32[3] memory users_pk = [0x0213456, 0x052436766, 0x02431657];
+        uint256 amountOfIterations = users_pk.length;
+        for (uint256 i; i < amountOfIterations; i++) {
+            SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliates[i]});
+            bytes32 msgHash = sigUtils.getTypedDataHash(affiliateTo);
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(users_pk[i], msgHash);
+            bytes memory signature = abi.encodePacked(r, s, v);
+            USERs[i] = vm.addr(users_pk[i]);
+            signatures[i] = signature;
+        }
+        vm.expectEmit(true, true, true, true);
+        emit AddAffiliateOrKOL(USERs[0], affiliates[0]);
+        vm.expectEmit(true, true, true, true);
+        emit AddAffiliateOrKOL(USERs[1], affiliates[1]);
+        vm.expectEmit(true, true, true, true);
+        emit AddAffiliateOrKOL(USERs[2], affiliates[2]);
+        referralList.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
+    }
+
+    function testBatchAddAffiliateOrKolOnBehalfOfInvalidDomain() public {
+        address[] memory affiliates = new address[](2);
+        address[] memory USERs = new address[](2);
+        bytes[] memory signatures = new bytes[](2);
+
+        // create and allow affiliate1
+        address affiliate = makeAddr("affiliate");
+        affiliates[0] = affiliate;
+        vm.startPrank(AIRDROPPER);
+        referralList.allowKOL(affiliate);
+        // create and allow affiliate2
+        address affiliate2 = makeAddr("affiliate2");
+        affiliates[1] = affiliate2;
+        referralList.allowKOL(affiliate2);
+
+        // setup invalid domain
+        EIP712Domain memory _invalidDomain = EIP712Domain("Overlay Referrals Invalid", "1.0");
+        SigUtils invalidSigUtils = new SigUtils(hashDomain(_invalidDomain));
+
+        // create a valid message hash, and valid signature for USERs
+        uint32[2] memory users_pk = [0x0213456, 0x052436766];
+        uint256 amountOfIterations = users_pk.length;
+        for (uint256 i; i < amountOfIterations; i++) {
+            SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliates[i]});
+            bytes32 msgHash = invalidSigUtils.getTypedDataHash(affiliateTo);
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(users_pk[i], msgHash);
+            bytes memory signature = abi.encodePacked(r, s, v);
+            USERs[i] = vm.addr(users_pk[i]);
+            signatures[i] = signature;
+        }
+
+        // expect to revert with InvalidSignature error
+        bytes4 selector = bytes4(keccak256("InvalidSignature()"));
+        vm.expectRevert(selector);
+        referralList.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
+    }
+
+    function testBatchAddAffiliateOrKolOnBehalfOfInvalidSignature() public {
+        address[] memory affiliates = new address[](3);
+        address[] memory USERs = new address[](3);
+        bytes[] memory signatures = new bytes[](3);
+
+        // create and allow affiliate1
+        address affiliate = makeAddr("affiliate");
+        affiliates[0] = affiliate;
+        vm.startPrank(AIRDROPPER);
+        referralList.allowKOL(affiliate);
+        // create and allow affiliate2
+        address affiliate2 = makeAddr("affiliate2");
+        affiliates[1] = affiliate2;
+        referralList.allowKOL(affiliate2);
+        // create and allow affiliate3
+        address affiliate3 = makeAddr("affiliate3");
+        affiliates[2] = affiliate3;
+        referralList.allowKOL(affiliate3);
+
+        // create a valid message hash, and valid signature for USERs
+        uint32[3] memory users_pk = [0x0213456, 0x052436766, 0x02431657];
+        uint256 amountOfIterations = users_pk.length;
+        for (uint256 i; i < amountOfIterations; i++) {
+            SigUtils.AffiliateTo memory affiliateTo = SigUtils.AffiliateTo({affiliate: affiliates[i]});
+            bytes32 msgHash = sigUtils.getTypedDataHash(affiliateTo);
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(users_pk[i], msgHash);
+            bytes memory signature = abi.encodePacked(r, s, v);
+            USERs[i] = vm.addr(users_pk[i]);
+            signatures[i] = signature;
+        }
+
+        USERs[0] = makeAddr("kaker");
+
+        // expect to revert with InvalidSignature error
+        bytes4 selector = bytes4(keccak256("InvalidSignature()"));
+        vm.expectRevert(selector);
+        referralList.batchAddAffiliateOrKolOnBehalfOf(USERs, affiliates, signatures);
     }
 
     function testSetRewardToken() public {
@@ -202,5 +394,16 @@ contract ReferralListTest is Test {
         vm.startPrank(AIRDROPPER);
         vm.expectRevert(selector);
         referralList.addAffiliateOrKOL(AIRDROPPER);
+    }
+
+    // Hashes the EIP712 domain separator struct
+    function hashDomain(EIP712Domain memory domain) private pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version)"),
+                keccak256(bytes(domain.name)),
+                keccak256(bytes(domain.version))
+            )
+        );
     }
 }

@@ -8,7 +8,6 @@ import {OverlayV1Token} from "src/OverlayV1Token.sol";
 import {ReferralList} from "src/ReferralList.sol";
 
 contract ReferralClaimTest is Test {
-
     ReferralList referralList;
     OverlayV1Token ovl;
 
