@@ -16,7 +16,7 @@ export class SignatureService {
     constructor(
         @InjectModel(Signature.name) private signatureModel: Model<Signature>,
         @InjectModel(Affiliate.name) private affiliateModel: Model<Affiliate>,
-    ) { }
+    ) {}
 
     async store(storeSignatureDto: StoreSignatureDto): Promise<Signature> {
         const existingSignature = await this.signatureModel
@@ -84,11 +84,11 @@ export class SignatureService {
         }
     }
 
-    async checkSignature(trader: string): Promise<boolean> {
+    async checkSignature(trader: string): Promise<Signature> {
         const signature = await this.signatureModel
             .findOne({ trader: trader })
             .exec()
 
-        return !!signature
+        return signature
     }
 }

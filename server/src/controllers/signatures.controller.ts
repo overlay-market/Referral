@@ -14,7 +14,7 @@ import { StoreSignatureDto } from "../dto/store-signature.dto"
 
 @Controller("signatures")
 export class SignaturesController {
-    constructor(private readonly signatureService: SignatureService) { }
+    constructor(private readonly signatureService: SignatureService) {}
 
     @Get("check/:trader")
     @HttpCode(HttpStatus.OK)
@@ -23,7 +23,9 @@ export class SignaturesController {
             throw new BadRequestException("Invalid Ethereum address format")
         }
 
-        return { exists: await this.signatureService.checkSignature(trader) }
+        const signature = await this.signatureService.checkSignature(trader)
+
+        return { exists: !!signature, affiliate: signature?.affiliate ?? "" }
     }
 
     @Post()
