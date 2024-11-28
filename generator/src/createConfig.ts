@@ -108,8 +108,7 @@ const fetchReferralRewards = async () => {
             }
         }`
     
-        const variables = {}
-        const data = (await axios.post(process.env.SUBGRAPH, { query, variables })).data.data
+        const data = (await axios.post(process.env.SUBGRAPH, query )).data.data
     
         res = data.referralPositions
         lastBlockTimestamp = data._meta.block.timestamp
