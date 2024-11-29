@@ -43,3 +43,11 @@ forge verify-contract \
     src/ReferralList.sol:ReferralList \
 
 */
+
+/*
+ To verify on Berachain use
+ forge verify-contract 0xD7775619FD40CfF4C13076A0DA7fD8D2ab44A30f src/ReferralList.sol:ReferralList 
+     --verifier-url 'https://api.routescan.io/v2/network/testnet/evm/80084/etherscan/api/' 
+     --etherscan-api-key "verifyContract" 
+     --num-of-optimizations 20
+*/
