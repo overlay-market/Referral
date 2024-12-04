@@ -6,6 +6,11 @@ export class Affiliate extends Document {
     @Prop({ required: true, unique: true })
     address: string
 
+    @Prop({ unique: true })
+    alias: string
+
+    aliasSignature: string
+
     @Prop({ default: Date.now })
     createdAt: Date
 }
