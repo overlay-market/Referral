@@ -21,7 +21,7 @@ export class AffiliateService {
         return createdAffiliate.save()
     }
 
-    async isValid(
+    async getState(
         address: string,
     ): Promise<{ isValid: boolean; alias: string }> {
         const affiliate = await this.affiliateModel.findOne({ address }).exec()
