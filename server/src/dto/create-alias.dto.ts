@@ -9,7 +9,9 @@ export class CreateAliasDto {
     @IsEthereumAddress()
     address: string
 
-    @IsAlphanumeric()
+    @IsAlphanumeric(undefined, {
+        message: "Alias can only contain letters and numbers",
+    })
     @Length(3, 8, { message: "Alias must be between 3 and 8 characters" })
     alias: string
 
