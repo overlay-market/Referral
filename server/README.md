@@ -42,8 +42,22 @@ The server will be available at `http://localhost:3000`.
 - `POST /affiliates` (Dev mode only): Register a new affiliate
   - Body: `{ "address": "0x..." }`
 
-- `GET /affiliates/:address`: Check if an affiliate is valid
-  - Response: `{ "isValid": true/false }`
+- `GET /affiliates/:address`: Check if an affiliate is valid and has alias
+  - Response: `{ "isValid": boolean, "alias": string | null }`
+
+- `GET /affiliates/aliases/:alias`: Check if alias exists and get affiliate info
+  - Response: Affiliate object or 404
+
+- `POST /affiliates/aliases`: Register an alias for affiliate
+  - Body: 
+    ```json
+    { 
+      "address": "0x...", 
+      "alias": "string", // 3-8 alphanumeric chars
+      "signature": "0x..." // EIP-712 signature
+    }
+    ```
+  - Response: Updated affiliate object
 
 ### Signatures
 
