@@ -24,7 +24,7 @@ export class AffiliatesController {
 
     @Get(":address")
     async state(@Param("address") address: string) {
-        return { isValid: await this.affiliateService.getState(address) }
+        return await this.affiliateService.getState(address)
     }
 
     @Get("/aliases/:alias")
