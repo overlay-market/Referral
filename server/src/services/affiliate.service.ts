@@ -27,7 +27,7 @@ export class AffiliateService {
         const affiliate = await this.affiliateModel.findOne({ address }).exec()
         return {
             isValid: !!affiliate,
-            alias: affiliate.alias,
+            alias: affiliate?.alias || null,
         }
     }
 

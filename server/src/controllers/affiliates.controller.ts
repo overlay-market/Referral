@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Param, UseGuards } from "@nestjs/common"
+import {
+    Controller,
+    Post,
+    Body,
+    Get,
+    Param,
+    UseGuards,
+    NotFoundException,
+} from "@nestjs/common"
 import { AffiliateService } from "../services/affiliate.service"
 import { CreateAffiliateDto } from "../dto/create-affiliate.dto"
 import { CreateAliasDto } from "../dto/create-alias.dto"
@@ -21,7 +29,13 @@ export class AffiliatesController {
 
     @Get("/aliases/:alias")
     async affiliateByAlias(@Param("alias") alias: string) {
-        return await this.affiliateService.getAffiliateByAlias(alias)
+        const affiliate = await this.affiliateService.getAffiliateByAlias(alias)
+        if (!affiliate) {
+            throw new NotFoundException(
+                `Affiliate with alias ${alias} not found`,
+            )
+        }
+        return affiliate
     }
 
     @Post("/aliases/")
