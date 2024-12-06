@@ -6,10 +6,10 @@ export class Affiliate extends Document {
     @Prop({ required: true, unique: true })
     address: string
 
-    @Prop({ unique: true })
+    @Prop()
     alias: string
 
-    @Prop({ unique: true })
+    @Prop()
     aliasSignature: string
 
     @Prop({ default: Date.now })
@@ -17,3 +17,6 @@ export class Affiliate extends Document {
 }
 
 export const AffiliateSchema = SchemaFactory.createForClass(Affiliate)
+
+AffiliateSchema.index({ alias: 1 }, { unique: true, sparse: true })
+AffiliateSchema.index({ aliasSignature: 1 }, { unique: true, sparse: true })
