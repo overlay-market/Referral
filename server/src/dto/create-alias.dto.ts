@@ -1,3 +1,4 @@
+import { Transform } from "class-transformer"
 import {
     IsAlphanumeric,
     IsEthereumAddress,
@@ -9,6 +10,7 @@ export class CreateAliasDto {
     @IsEthereumAddress()
     address: string
 
+    @Transform(({ value }) => value.toLowerCase())
     @IsAlphanumeric(undefined, {
         message: "Alias can only contain letters and numbers",
     })

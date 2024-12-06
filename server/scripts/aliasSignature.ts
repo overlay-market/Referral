@@ -33,7 +33,7 @@ async function generateAliasSignature() {
 
     const message = {
         affiliate: account.address,
-        alias: "DAYO",
+        alias: "dayo",
     }
 
     try {

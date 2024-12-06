@@ -53,7 +53,8 @@ export class AffiliateService {
     }
 
     async addAlias(createAliasDto: CreateAliasDto): Promise<Affiliate> {
-        const { address, alias, signature } = createAliasDto
+        const { address, signature } = createAliasDto
+        const alias = createAliasDto.alias.toLowerCase()
 
         const existingAlias = await this.getAffiliateByAlias(alias)
         if (existingAlias) {
