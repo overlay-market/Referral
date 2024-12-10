@@ -10,6 +10,7 @@ import { recoverTypedDataAddress, Hex } from "viem"
 import { Signature } from "../schemas/signature.schema"
 import { Affiliate } from "../schemas/affiliate.schema"
 import { StoreSignatureDto } from "../dto/store-signature.dto"
+import { SignatureWithAlias } from "src/config/types"
 
 @Injectable()
 export class SignatureService {
@@ -18,7 +19,9 @@ export class SignatureService {
         @InjectModel(Affiliate.name) private affiliateModel: Model<Affiliate>,
     ) {}
 
-    async store(storeSignatureDto: StoreSignatureDto): Promise<Signature> {
+    async store(
+        storeSignatureDto: StoreSignatureDto,
+    ): Promise<SignatureWithAlias> {
         const existingSignature = await this.signatureModel
             .findOne({ trader: storeSignatureDto.trader })
             .exec()
@@ -43,7 +46,15 @@ export class SignatureService {
 
         const createdSignature =
             await this.signatureModel.create(storeSignatureDto)
-        return createdSignature.save()
+        const savedSignature = await createdSignature.save()
+
+        // Create a new object that matches our interface
+        const result = savedSignature.toObject() as SignatureWithAlias
+        if (affiliate.alias) {
+            result.affiliateAlias = affiliate.alias
+        }
+
+        return result
     }
 
     private async validateSignature(
