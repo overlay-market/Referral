@@ -3,7 +3,7 @@ import { Document } from "mongoose"
 
 @Schema()
 export class Affiliate extends Document {
-    @Prop({ required: true, unique: true })
+    @Prop({ required: true, unique: true, lowercase: true })
     address: string
 
     @Prop()
