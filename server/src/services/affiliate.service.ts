@@ -17,6 +17,15 @@ export class AffiliateService {
     ) {}
 
     async create(createAffiliateDto: CreateAffiliateDto): Promise<Affiliate> {
+        const address = createAffiliateDto.address
+        const existingAffiliate = await this.affiliateModel
+            .findOne({ address })
+            .exec()
+
+        if (existingAffiliate) {
+            throw new ConflictException("Affiliate is already registered")
+        }
+
         const createdAffiliate = new this.affiliateModel(createAffiliateDto)
         return createdAffiliate.save()
     }
