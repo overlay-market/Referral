@@ -10,6 +10,7 @@ import {
 import { AffiliateService } from "../services/affiliate.service"
 import { CreateAffiliateDto } from "../dto/create-affiliate.dto"
 import { CreateAliasDto } from "../dto/create-alias.dto"
+import { AliasParamDto } from "../dto/fetch-by-alias.dto"
 import { DevModeGuard } from "../guards/dev-mode.guard"
 
 @Controller("affiliates")
@@ -28,7 +29,7 @@ export class AffiliatesController {
     }
 
     @Get("/aliases/:alias")
-    async affiliateByAlias(@Param("alias") alias: string) {
+    async affiliateByAlias(@Param() { alias }: AliasParamDto) {
         const affiliate = await this.affiliateService.getAffiliateByAlias(alias)
         if (!affiliate) {
             throw new NotFoundException(
