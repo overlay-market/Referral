@@ -1,9 +1,12 @@
+import { Transform } from "class-transformer"
 import { IsEthereumAddress, Matches } from "class-validator"
 
 export class StoreSignatureDto {
+    @Transform(({ value }) => value.toLowerCase())
     @IsEthereumAddress()
     trader: string
 
+    @Transform(({ value }) => value.toLowerCase())
     @IsEthereumAddress()
     affiliate: string
 

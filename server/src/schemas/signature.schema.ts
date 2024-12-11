@@ -3,10 +3,10 @@ import { Document } from "mongoose"
 
 @Schema()
 export class Signature extends Document {
-    @Prop({ required: true, unique: true })
+    @Prop({ required: true, unique: true, lowercase: true })
     trader: string
 
-    @Prop({ required: true })
+    @Prop({ required: true, lowercase: true })
     affiliate: string
 
     @Prop({ required: true })

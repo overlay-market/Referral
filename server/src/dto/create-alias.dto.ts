@@ -7,6 +7,7 @@ import {
 } from "class-validator"
 
 export class CreateAliasDto {
+    @Transform(({ value }) => value.toLowerCase())
     @IsEthereumAddress()
     address: string
 
