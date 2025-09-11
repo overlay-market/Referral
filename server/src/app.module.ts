@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common"
 import { ConfigModule, ConfigService } from "@nestjs/config"
 import { MongooseModule } from "@nestjs/mongoose"
 import configuration from "./config/configuration"
+import { AppController } from "./app.controller"
+import { AppService } from "./app.service"
 import { AffiliatesController } from "./controllers/affiliates.controller"
 import { SignaturesController } from "./controllers/signatures.controller"
 import { AffiliateService } from "./services/affiliate.service"
@@ -27,7 +29,7 @@ import { Signature, SignatureSchema } from "./schemas/signature.schema"
             { name: Signature.name, schema: SignatureSchema },
         ]),
     ],
-    controllers: [AffiliatesController, SignaturesController],
-    providers: [AffiliateService, SignatureService],
+    controllers: [AppController, AffiliatesController, SignaturesController],
+    providers: [AppService, AffiliateService, SignatureService],
 })
 export class AppModule {}
