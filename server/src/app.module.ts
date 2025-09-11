@@ -8,6 +8,7 @@ import { AffiliatesController } from "./controllers/affiliates.controller"
 import { SignaturesController } from "./controllers/signatures.controller"
 import { AffiliateService } from "./services/affiliate.service"
 import { SignatureService } from "./services/signature.service"
+import { SignaturesService } from "./signatures/signatures.service"
 import { Affiliate, AffiliateSchema } from "./schemas/affiliate.schema"
 import { Signature, SignatureSchema } from "./schemas/signature.schema"
 
@@ -30,6 +31,11 @@ import { Signature, SignatureSchema } from "./schemas/signature.schema"
         ]),
     ],
     controllers: [AppController, AffiliatesController, SignaturesController],
-    providers: [AppService, AffiliateService, SignatureService],
+    providers: [
+        AppService,
+        AffiliateService,
+        SignatureService,
+        SignaturesService,
+    ],
 })
 export class AppModule {}
