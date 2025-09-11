@@ -11,7 +11,9 @@
     "deploy:mainnet": "bash -c 'source .env && forge script Deploy --rpc-url $MAINNET_RPC --broadcast --verify -vvvv'",
     "deploy:sepolia": "bash -c 'source .env && forge script Deploy --rpc-url $SEPOLIA_RPC --broadcast --verify -vvvv'",
     "deploy:bartio": "bash -c 'source .env && forge script Deploy --rpc-url $BARTIO_RPC --broadcast --legacy -vvvv'",
+    "deploy:bsc": "bash -c 'source .env && forge script Deploy --rpc-url $BSC_RPC --broadcast --verify -vvvv'",
     "upgrade:mainnet": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $MAINNET_RPC --broadcast --verify -vvvv'",
-    "upgrade:sepolia": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $SEPOLIA_RPC --broadcast --verify -vvvv'"
+    "upgrade:sepolia": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $SEPOLIA_RPC --broadcast --verify -vvvv'",
+    "upgrade:bsc": "bash -c 'source .env && forge script UpgradeImplementation --rpc-url $BSC_RPC --broadcast --verify -vvvv'"
   }
 }
