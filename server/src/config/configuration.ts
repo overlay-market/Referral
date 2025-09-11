@@ -5,11 +5,11 @@ export default () => ({
     port: parseInt(process.env.PORT) || 3000,
     signingKey: process.env.PRIVATE_KEY,
     subgraphUrl:
-        "https://api.studio.thegraph.com/query/49419/overlay-arb-sepolia/version/latest",
+        "https://api.goldsky.com/api/public/project_clyiptt06ifuv01ul9xiwfj28/subgraphs/overlay-bsc/prod/gn",
     referrals: {
-        minTradingVolume: ethers.parseEther("1000"), // 1000 OVL
-        contract: "0x1cee53AB89004b2a9E173edc6F51509f8eB32122",
-        chainId: 421614,
+        minTradingVolume: ethers.parseEther("10000"), // 10000 OVL
+        contract: "0x1a0ef183d548405705bb9b00e8b4ef3524ae090e",
+        chainId: 56,
     },
     isDevelopmentMode: process.env.NODE_ENV !== "production",
     mongoUri: process.env.MONGO_URI || "mongodb://localhost:27017/referral",
