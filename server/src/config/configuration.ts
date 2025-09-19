@@ -8,7 +8,7 @@ export default () => ({
         "https://api.goldsky.com/api/public/project_clyiptt06ifuv01ul9xiwfj28/subgraphs/overlay-bsc/prod/gn",
     referrals: {
         minTradingVolume: ethers.parseEther(process.env.VOLUME_THRESHOLD), // 10000 OVL
-        contract: "0x1a0ef183d548405705bb9b00e8b4ef3524ae090e",
+        contract: "0xa19338c002a065f4dc3ad1949738ccdc4b10061d",
         chainId: 56,
     },
     isDevelopmentMode: process.env.NODE_ENV !== "production",
