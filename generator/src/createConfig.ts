@@ -17,12 +17,21 @@ export const createConfig = async () => {
     const merkleTree = new Generator(decimals, airdrop)
 
     // Reset rewards on rewards API
-    await axios.delete(process.env.REWARDS_API_URI, {
-      data: { campaign: "referral" },
-      headers: {
-        Authorization: `Token ${process.env.REWARDS_API_TOKEN}`
+    try {
+      await axios.delete(process.env.REWARDS_API_URI, {
+        data: { campaign: "referral" },
+        headers: {
+          Authorization: `Token ${process.env.REWARDS_API_TOKEN}`
+        }
+      })
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status
+        const statusText = err.response?.statusText ?? err.message
+        throw new Error(`Error resetting rewards on the API (${status ?? "unknown"} ${statusText}).`)
       }
-    })
+      throw err
+    }
     
     // Update rewards on rewards API
     for (const [wallet, amount] of Object.entries(airdrop)) {
@@ -108,10 +117,20 @@ const fetchReferralRewards = async () => {
             }
         }`
     
-        const data = (await axios.post(process.env.SUBGRAPH, query )).data.data
+        const { data } = await axios.post(
+          process.env.SUBGRAPH as string,
+          { query },
+          {
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }
+        )
+
+        const { referralPositions, _meta } = data.data
     
-        res = data.referralPositions
-        lastBlockTimestamp = data._meta.block.timestamp
+        res = referralPositions
+        lastBlockTimestamp = _meta.block.timestamp
 
         res.forEach(({owner, totalRewardsPending}) => {
             rewardsPending[owner.id] = totalRewardsPending
