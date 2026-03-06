@@ -7,6 +7,7 @@ import {
 import { InjectModel } from "@nestjs/mongoose"
 import { Model } from "mongoose"
 import { recoverTypedDataAddress, Hex } from "viem"
+import { OnChainService } from "../utils/on-chain"
 import { Signature } from "../schemas/signature.schema"
 import { Affiliate } from "../schemas/affiliate.schema"
 import { StoreSignatureDto } from "../dto/store-signature.dto"
@@ -17,6 +18,7 @@ export class SignatureService {
     constructor(
         @InjectModel(Signature.name) private signatureModel: Model<Signature>,
         @InjectModel(Affiliate.name) private affiliateModel: Model<Affiliate>,
+        private onChainService: OnChainService,
     ) {}
 
     async store(
@@ -31,11 +33,21 @@ export class SignatureService {
             )
         }
 
-        const affiliate = await this.affiliateModel
+        let affiliate = await this.affiliateModel
             .findOne({ address: storeSignatureDto.affiliate })
             .exec()
         if (!affiliate) {
-            throw new NotFoundException("Affiliate not found")
+            const isAffiliate = await this.onChainService.isAffiliate(
+                storeSignatureDto.affiliate,
+            )
+            if (!isAffiliate) {
+                throw new NotFoundException("Affiliate not found")
+            }
+            affiliate = await this.affiliateModel.findOneAndUpdate(
+                { address: storeSignatureDto.affiliate },
+                { $setOnInsert: { address: storeSignatureDto.affiliate } },
+                { upsert: true, new: true },
+            )
         }
 
         // Validate the signature
