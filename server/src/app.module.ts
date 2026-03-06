@@ -9,6 +9,7 @@ import { SignaturesController } from "./controllers/signatures.controller"
 import { AffiliateService } from "./services/affiliate.service"
 import { SignatureService } from "./services/signature.service"
 import { SignaturesService } from "./signatures/signatures.service"
+import { OnChainService } from "./utils/on-chain"
 import { Affiliate, AffiliateSchema } from "./schemas/affiliate.schema"
 import { Signature, SignatureSchema } from "./schemas/signature.schema"
 
@@ -36,6 +37,7 @@ import { Signature, SignatureSchema } from "./schemas/signature.schema"
         AffiliateService,
         SignatureService,
         SignaturesService,
+        OnChainService,
     ],
 })
 export class AppModule {}
