@@ -9,11 +9,13 @@ import { Affiliate } from "../schemas/affiliate.schema"
 import { CreateAffiliateDto } from "../dto/create-affiliate.dto"
 import { CreateAliasDto } from "../dto/create-alias.dto"
 import { getAddress, Hex, recoverTypedDataAddress } from "viem"
+import { OnChainService } from "../utils/on-chain"
 
 @Injectable()
 export class AffiliateService {
     constructor(
         @InjectModel(Affiliate.name) private affiliateModel: Model<Affiliate>,
+        private onChainService: OnChainService,
     ) {}
 
     async create(createAffiliateDto: CreateAffiliateDto): Promise<Affiliate> {
@@ -70,9 +72,17 @@ export class AffiliateService {
             throw new ConflictException("Alias already taken")
         }
 
-        const affiliate = await this.affiliateModel.findOne({ address }).exec()
+        let affiliate = await this.affiliateModel.findOne({ address }).exec()
         if (!affiliate) {
-            throw new BadRequestException("Affiliate not found")
+            const isAffiliate = await this.onChainService.isAffiliate(address)
+            if (!isAffiliate) {
+                throw new BadRequestException("Affiliate not found")
+            }
+            affiliate = await this.affiliateModel.findOneAndUpdate(
+                { address },
+                { $setOnInsert: { address } },
+                { upsert: true, new: true },
+            )
         }
         if (affiliate.alias) {
             throw new BadRequestException("Affiliate already has an alias")

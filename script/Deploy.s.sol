@@ -7,9 +7,9 @@ import {ReferralList} from "src/ReferralList.sol";
 import {ReferralListProxy} from "src/ProxyWrapper.sol";
 
 abstract contract DeployReferralList is Script {
-    function _deploy() internal {
+    function _deploy() internal returns (address proxyAddress) {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address owner_ = vm.envAddress("OWNER_ADDRESS");
+        address owner_ = vm.addr(deployerPrivateKey); // Auto-derive owner from private key
         address _airdropper = vm.envAddress("AIRDROPPER_ADDRESS");
         address _rewardToken = vm.envAddress("OV_CONTRACT");
         address _verifyingAddress = vm.envAddress("VERIFIER_ADDRESS");
@@ -20,15 +20,36 @@ abstract contract DeployReferralList is Script {
 
         vm.startBroadcast(deployerPrivateKey);
         ReferralList impl = new ReferralList();
-        new ReferralListProxy(address(impl), data);
+        ReferralListProxy proxy = new ReferralListProxy(address(impl), data);
+        proxyAddress = address(proxy);
 
         vm.stopBroadcast();
+        
+        console2.log("Implementation deployed at:", address(impl));
+        console2.log("Proxy deployed at:", proxyAddress);
+        console2.log("Initial owner (deployer):", owner_);
     }
 }
 
 contract Deploy is DeployReferralList {
     function run() external {
-        _deploy();
+        address proxyAddress = _deploy();
+        
+        // Transfer ownership to Safe if SAFE_ADDRESS is set
+        address safeAddress = vm.envOr("SAFE_ADDRESS", address(0));
+        if (safeAddress != address(0)) {
+            uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+            
+            console2.log("Transferring ownership to Safe:", safeAddress);
+            
+            vm.startBroadcast(deployerPrivateKey);
+            ReferralList(proxyAddress).transferOwnership(safeAddress);
+            vm.stopBroadcast();
+            
+            console2.log("Ownership transferred to Safe:", safeAddress);
+        } else {
+            console2.log("SAFE_ADDRESS not set, skipping ownership transfer");
+        }
     }
 }
 
